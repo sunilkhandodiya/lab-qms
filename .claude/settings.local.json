@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__claude_ai_BT1_MCP__get_current_sprint",
+      "mcp__claude_ai_BT1_MCP__get_current_sprint_working_item",
+      "mcp__claude_ai_BT1_MCP__query_bt1_table",
+      "Bash(python3 *)",
+      "mcp__claude_ai_BT1_MCP__global_ai_search",
+      "mcp__claude_ai_BT1_MCP__kb_article_reader",
+      "Bash(node -e 'const{PrismaClient}=require\\('\\\\''@prisma/client'\\\\''\\);const p=new PrismaClient\\(\\);p.$queryRaw`SELECT 1`.then\\(\\(\\)=>{console.log\\('\\\\''DB OK'\\\\''\\)}\\).catch\\(e=>console.log\\('\\\\''DB ERR'\\\\'',e.message\\)\\).finally\\(\\(\\)=>p.$disconnect\\(\\)\\)')",
+      "Bash(npx prisma *)",
+      "Bash(node prisma/seed.js)",
+      "Bash(node --check app/api/calibration/route.js)",
+      "Bash(npm run *)",
+      "Bash(PORT=3100 npm run start)",
+      "Bash(echo \"started pid $!\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3100/login)",
+      "Bash(curl -s -o /dev/null -w \"probe: %{http_code}\\\\n\" http://localhost:3100/login)",
+      "Read(//private/tmp/**)",
+      "Bash(curl -s -b /tmp/qms.cookies http://localhost:3100/ -o /tmp/dash.html)",
+      "Read(//tmp/**)",
+      "Bash(node *)",
+      "Bash(pkill -f \"next-server\")",
+      "Bash(pkill -f \"next dev\")",
+      "Bash(lsof -i :3000 -sTCP:LISTEN -n -P)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/login)",
+      "Bash(echo \"exit: $?\")"
+    ]
+  }
+}

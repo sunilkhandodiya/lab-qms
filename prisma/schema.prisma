@@ -1,0 +1,719 @@
+// prisma/schema.prisma — Lab QMS (NABL / ISO 15189:2022)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Users & Auth ────────────────────────────────────────────────────────────
+
+model User {
+  id             String    @id @default(cuid())
+  name           String?
+  email          String    @unique
+  emailVerified  DateTime?
+  image          String?
+  password       String?
+  role           Role      @default(LAB_TECHNICIAN)
+  active         Boolean   @default(true)
+  locationId     String?
+  location       Location? @relation(fields: [locationId], references: [id])
+  lastLoginAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  accounts       Account[]
+  sessions       Session[]
+  documents      Document[]         @relation("DocumentAuthor")
+  approvals      DocumentApproval[]
+  trainings      Training[]
+  capas          Capa[]             @relation("CAPAOwner")
+  auditLogs      AuditLog[]
+  activities     UserActivity[]
+}
+
+enum Role {
+  ADMIN
+  DR_PATHOLOGY
+  QUALITY_MANAGER
+  CLUSTER_MANAGER
+  LAB_MANAGER
+  SR_LAB_TECHNICIAN
+  LAB_TECHNICIAN
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+  @@unique([identifier, token])
+}
+
+// ─── Organisation hierarchy: State → Location (centre) → Department → Instrument ─
+
+model State {
+  id        String     @id @default(cuid())
+  name      String     @unique
+  code      String?
+  createdAt DateTime   @default(now())
+  locations Location[]
+}
+
+model Location {
+  id          String       @id @default(cuid())
+  name        String
+  code        String?
+  address     String?
+  stateId     String?
+  state       State?       @relation(fields: [stateId], references: [id])
+  createdAt   DateTime     @default(now())
+
+  profiles    QCProfile[]
+  qcTests     QCTest[]
+  instruments Instrument[]
+  lots        Lot[]
+  users       User[]
+  equipment   Equipment[]
+  analytes    QCAnalyte[]
+  calibrations    CalibrationVerification[]
+  qcLotChecks     QcLotVerification[]
+  lisChecks       LisVerification[]
+  ilcChecks       Ilc[]
+  ipvChecks       InterPersonnelValidation[]
+  cvRecords       CvRecord[]
+  riskAssessments RiskAssessment[]
+  qualityRecords  QualityRecord[]
+  eqasSchemes     EQASScheme[]
+
+  @@unique([name, stateId])
+}
+
+model Department {
+  id        String      @id @default(cuid())
+  name      String      @unique
+  createdAt DateTime    @default(now())
+  qcTests   QCTest[]
+  profiles  QCProfile[]
+}
+
+model Instrument {
+  id         String    @id @default(cuid())
+  name       String
+  locationId String
+  location   Location  @relation(fields: [locationId], references: [id])
+  createdAt  DateTime  @default(now())
+  qcTests    QCTest[]
+  @@unique([name, locationId])
+}
+
+model Lot {
+  id         String    @id @default(cuid())
+  name       String
+  locationId String
+  location   Location  @relation(fields: [locationId], references: [id])
+  createdAt  DateTime  @default(now())
+  lot1Tests  QCTest[]  @relation("Lot1")
+  lot2Tests  QCTest[]  @relation("Lot2")
+  lot3Tests  QCTest[]  @relation("Lot3")
+  @@unique([name, locationId])
+}
+
+// ─── Document Control / SOP ───────────────────────────────────────────────────
+
+model Document {
+  id          String          @id @default(cuid())
+  docNumber   String          @unique
+  title       String
+  category    DocCategory
+  status      DocStatus       @default(DRAFT)
+  version     String          @default("1.0")
+  content     String          @db.Text
+  department  String?
+  instrument  String?
+  effectiveAt DateTime?
+  reviewDue   DateTime?
+  retiredAt   DateTime?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  authorId    String
+  author      User            @relation("DocumentAuthor", fields: [authorId], references: [id])
+  approvals   DocumentApproval[]
+  trainings   Training[]
+  auditLogs   AuditLog[]
+  activities  UserActivity[]
+}
+
+enum DocCategory {
+  QUALITY_MANUAL
+  SOP
+  WORK_INSTRUCTION
+  FORM
+  POLICY
+}
+
+enum DocStatus {
+  DRAFT
+  IN_REVIEW
+  APPROVED
+  EFFECTIVE
+  SUPERSEDED
+  RETIRED
+}
+
+model DocumentApproval {
+  id         String         @id @default(cuid())
+  documentId String
+  document   Document       @relation(fields: [documentId], references: [id])
+  reviewerId String
+  reviewer   User           @relation(fields: [reviewerId], references: [id])
+  status     ApprovalStatus @default(PENDING)
+  comment    String?
+  signedAt   DateTime?
+  createdAt  DateTime       @default(now())
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// ─── Equipment maintenance & calibration log ──────────────────────────────────
+
+model Equipment {
+  id             String      @id @default(cuid())
+  assetId        String      @unique
+  name           String
+  type           String?
+  manufacturer   String?
+  model          String?
+  serialNumber   String?
+  instId         String?
+  department     String?
+  agency         String?
+  frequency      String?
+  contactPerson  String?
+  locationId     String?
+  location       Location?   @relation(fields: [locationId], references: [id])
+  status         EquipStatus @default(ACTIVE)
+  receivedAt     DateTime?
+  installedAt    DateTime?
+  calibrationDue DateTime?
+  pmDue          DateTime?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  calibrations   Calibration[]
+  maintenances   Maintenance[]
+  auditLogs      AuditLog[]
+  activities     UserActivity[]
+}
+
+enum EquipStatus {
+  ACTIVE
+  OUT_FOR_CALIBRATION
+  UNDER_MAINTENANCE
+  RETIRED
+}
+
+model Calibration {
+  id          String      @id @default(cuid())
+  equipmentId String
+  equipment   Equipment   @relation(fields: [equipmentId], references: [id])
+  performedAt DateTime
+  nextDue     DateTime
+  performedBy String
+  certificate String?
+  result      CalibResult
+  notes       String?
+  createdAt   DateTime    @default(now())
+}
+
+enum CalibResult {
+  PASS
+  FAIL
+  CONDITIONAL
+}
+
+model Maintenance {
+  id          String    @id @default(cuid())
+  equipmentId String
+  equipment   Equipment @relation(fields: [equipmentId], references: [id])
+  type        String
+  performedAt DateTime
+  performedBy String
+  notes       String?
+  createdAt   DateTime  @default(now())
+}
+
+// ─── Control & Calibration: lot verification, LIS, ILC, IPV, CV% ──────────────
+
+model CalibrationVerification {
+  id              String    @id @default(cuid())
+  locationId      String?
+  location        Location? @relation(fields: [locationId], references: [id])
+  department      String?
+  instrument      String?
+  monthYear       DateTime?
+  date            DateTime  @default(now())
+  calibrationName String
+  oldLot          String?
+  oldExpiry       DateTime?
+  newLot          String?
+  newExpiry       DateTime?
+  valueOldLot     Float?
+  valueNewLot     Float?
+  difference      Float?
+  acceptableLimit String?
+  acceptable      Boolean   @default(false)
+  technicianBy    String?
+  supervisorBy    String?
+  imageUrl        String?
+  createdAt       DateTime  @default(now())
+}
+
+model QcLotVerification {
+  id              String    @id @default(cuid())
+  locationId      String?
+  location        Location? @relation(fields: [locationId], references: [id])
+  department      String?
+  instrument      String?
+  date            DateTime  @default(now())
+  qcName          String
+  oldLot          String?
+  oldExpiry       DateTime?
+  newLot          String?
+  newExpiry       DateTime?
+  valueOldLot     Float?
+  valueNewLot     Float?
+  difference      Float?
+  acceptableLimit String?
+  acceptable      Boolean   @default(false)
+  technicianBy    String?
+  supervisorBy    String?
+  imageUrl        String?
+  createdAt       DateTime  @default(now())
+}
+
+model LisVerification {
+  id              String    @id @default(cuid())
+  locationId      String?
+  location        Location? @relation(fields: [locationId], references: [id])
+  date            DateTime  @default(now())
+  barcode         String?
+  parameter       String
+  equipmentResult Float?
+  transferredTo   String?
+  transferredResult Float?
+  diffPercent     Float?
+  acceptable      Boolean   @default(false)
+  recordedBy      String?
+  createdAt       DateTime  @default(now())
+}
+
+model Ilc {
+  id            String    @id @default(cuid())
+  locationId    String?
+  location      Location? @relation(fields: [locationId], references: [id])
+  date          DateTime  @default(now())
+  sampleDetails String?
+  testName      String?
+  analyte       String
+  ourResult     Float?
+  refLabResult  Float?
+  diffPercent   Float?
+  acceptable    Boolean   @default(false)
+  comment       String?
+  createdAt     DateTime  @default(now())
+}
+
+model InterPersonnelValidation {
+  id             String    @id @default(cuid())
+  locationId     String?
+  location       Location? @relation(fields: [locationId], references: [id])
+  date           DateTime  @default(now())
+  department     String?
+  machineA       String?
+  machineB       String?
+  parameter      String
+  resultA        Float?
+  resultB        Float?
+  diffPercent    Float?
+  acceptable     Boolean   @default(false)
+  comment        String?
+  createdAt      DateTime  @default(now())
+}
+
+model CvRecord {
+  id          String    @id @default(cuid())
+  locationId  String?
+  location    Location? @relation(fields: [locationId], references: [id])
+  department  String?
+  parameter   String
+  method      String?
+  level       String     // L1 / L2 / L3
+  noOfPoints  Int?
+  mean        Float?
+  sd          Float?
+  cv          Float?
+  month       DateTime?
+  createdAt   DateTime  @default(now())
+}
+
+// ─── Risk Assessment ──────────────────────────────────────────────────────────
+
+model RiskAssessment {
+  id            String    @id @default(cuid())
+  locationId    String?
+  location      Location? @relation(fields: [locationId], references: [id])
+  stage         RiskStage
+  potentialRisk String
+  riskLevel     RiskLevel @default(MEDIUM)
+  mitigation    String?   @db.Text
+  monitoring    String?
+  responsibility String?
+  reviewMonth   DateTime?
+  ltApproved    Boolean   @default(false)
+  drApproved    Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+enum RiskStage {
+  PRE_ANALYTICAL
+  ANALYTICAL
+  POST_ANALYTICAL
+  SAFETY
+  OTHER
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+// ─── General Quality / QMS log records (generic, schema-light) ────────────────
+
+model QualityRecord {
+  id          String    @id @default(cuid())
+  logCode     String     // e.g. "001", "G-013"
+  logTitle    String
+  category    LogCategory @default(GENERAL)
+  locationId  String?
+  location    Location? @relation(fields: [locationId], references: [id])
+  date        DateTime  @default(now())
+  summary     String?
+  data        Json?
+  imageUrl    String?
+  status      RecordStatus @default(SUBMITTED)
+  recordedBy  String?
+  approvedBy  String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+enum LogCategory {
+  GENERAL
+  QMS
+}
+
+enum RecordStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REJECTED
+}
+
+// ─── CAPA ─────────────────────────────────────────────────────────────────────
+
+model Capa {
+  id          String     @id @default(cuid())
+  capaNumber  String     @unique
+  title       String
+  type        CapaType
+  source      String
+  description String     @db.Text
+  rootCause   String?    @db.Text
+  action      String?    @db.Text
+  status      CapaStatus @default(OPEN)
+  priority    Priority   @default(MEDIUM)
+  dueDate     DateTime?
+  closedAt    DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  ownerId     String
+  owner       User       @relation("CAPAOwner", fields: [ownerId], references: [id])
+  auditLogs   AuditLog[]
+  activities  UserActivity[]
+}
+
+enum CapaType {
+  CORRECTIVE
+  PREVENTIVE
+}
+
+enum CapaStatus {
+  OPEN
+  IN_PROGRESS
+  PENDING_VERIFICATION
+  CLOSED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+// ─── Training ─────────────────────────────────────────────────────────────────
+
+model Training {
+  id          String         @id @default(cuid())
+  documentId  String
+  document    Document       @relation(fields: [documentId], references: [id])
+  userId      String
+  user        User           @relation(fields: [userId], references: [id])
+  status      TrainingStatus @default(PENDING)
+  assignedAt  DateTime       @default(now())
+  dueDate     DateTime?
+  completedAt DateTime?
+  signedOff   Boolean        @default(false)
+  notes       String?
+}
+
+enum TrainingStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  OVERDUE
+}
+
+// ─── Internal QC (Levey-Jennings) ─────────────────────────────────────────────
+
+model QCAnalyte {
+  id         String    @id @default(cuid())
+  name       String
+  unit       String
+  method     String?
+  department String?
+  instrument String?
+  locationId String?
+  location   Location? @relation(fields: [locationId], references: [id])
+  mean       Float
+  sd         Float
+  cv         Float?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  levels     QCLevel[]
+}
+
+model QCLevel {
+  id         String     @id @default(cuid())
+  analyteId  String
+  analyte    QCAnalyte  @relation(fields: [analyteId], references: [id])
+  levelName  String
+  lotNumber  String?
+  expiryDate DateTime?
+  mean       Float
+  sd         Float
+  results    QCResult[]
+}
+
+model QCResult {
+  id            String   @id @default(cuid())
+  levelId       String
+  level         QCLevel  @relation(fields: [levelId], references: [id])
+  value         Float
+  measuredAt    DateTime @default(now())
+  measuredBy    String
+  zScore        Float?
+  westgardFlags String[]
+  status        QCStatus @default(ACCEPT)
+  comment       String?
+  approvedBy    String?
+  createdAt     DateTime @default(now())
+}
+
+enum QCStatus {
+  ACCEPT
+  WARNING
+  REJECT
+  REPEAT
+}
+
+// ─── EQAS / Proficiency Testing (Z-score for hematology, SDI for biochem) ─────
+
+model EQASScheme {
+  id           String      @id @default(cuid())
+  name         String
+  provider     String
+  analytes     String[]
+  frequency    String
+  accreditBody String?
+  discipline   String?
+  scoreType    String      @default("SDI") // SDI or ZSCORE
+  locationId   String?
+  location     Location?   @relation(fields: [locationId], references: [id])
+  active       Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+  cycles       EQASCycle[]
+}
+
+model EQASCycle {
+  id           String     @id @default(cuid())
+  schemeId     String
+  scheme       EQASScheme @relation(fields: [schemeId], references: [id])
+  cycleRef     String
+  dispatchDate DateTime?
+  dueDate      DateTime
+  submittedAt  DateTime?
+  status       EQASStatus @default(PENDING)
+  createdAt    DateTime   @default(now())
+  results      EQASResult[]
+}
+
+enum EQASStatus {
+  PENDING
+  RECEIVED
+  IN_PROGRESS
+  SUBMITTED
+  REPORTED
+}
+
+model EQASResult {
+  id          String     @id @default(cuid())
+  cycleId     String
+  cycle       EQASCycle  @relation(fields: [cycleId], references: [id])
+  analyte     String
+  unit        String?
+  yourResult  Float
+  allLabsMean Float?
+  allLabsSD   Float?
+  biasPercent Float?
+  sdi         Float?
+  zScore      Float?
+  cvPercent   Float?
+  grade       EQASGrade?
+  performance String?
+  rootCause   String?    @db.Text
+  comment     String?
+  capaRaised  Boolean    @default(false)
+  createdAt   DateTime   @default(now())
+}
+
+enum EQASGrade {
+  EXCELLENT
+  GOOD
+  ACCEPTABLE
+  BORDERLINE
+  UNACCEPTABLE
+}
+
+// ─── QC Test Master & Profiles ────────────────────────────────────────────────
+
+model QCTest {
+  id           String      @id @default(cuid())
+  testCode     String      @unique
+  testName     String
+  method       String?
+  unit         String?
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id])
+  instrumentId String?
+  instrument   Instrument? @relation(fields: [instrumentId], references: [id])
+  locationId   String?
+  location     Location?   @relation(fields: [locationId], references: [id])
+  lot1Id       String?
+  lot1         Lot?        @relation("Lot1", fields: [lot1Id], references: [id])
+  lot2Id       String?
+  lot2         Lot?        @relation("Lot2", fields: [lot2Id], references: [id])
+  lot3Id       String?
+  lot3         Lot?        @relation("Lot3", fields: [lot3Id], references: [id])
+  hasResult    Boolean   @default(false)
+  active       Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model QCProfile {
+  id           String     @id @default(cuid())
+  profileName  String
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id])
+  locationId   String?
+  location     Location?   @relation(fields: [locationId], references: [id])
+  status       ProfileStatus @default(ENABLED)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+enum ProfileStatus {
+  ENABLED
+  DISABLED
+}
+
+// ─── Audit & Activity ──────────────────────────────────────────────────────────
+
+model AuditLog {
+  id          String     @id @default(cuid())
+  action      String
+  entity      String
+  entityId    String
+  userId      String?
+  user        User?      @relation(fields: [userId], references: [id])
+  details     Json?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime   @default(now())
+  documentId  String?
+  document    Document?  @relation(fields: [documentId], references: [id])
+  equipmentId String?
+  equipment   Equipment? @relation(fields: [equipmentId], references: [id])
+  capaId      String?
+  capa        Capa?      @relation(fields: [capaId], references: [id])
+}
+
+model UserActivity {
+  id          String     @id @default(cuid())
+  userId      String
+  user        User       @relation(fields: [userId], references: [id])
+  action      String
+  page        String?
+  createdAt   DateTime   @default(now())
+  documentId  String?
+  document    Document?  @relation(fields: [documentId], references: [id])
+  equipmentId String?
+  equipment   Equipment? @relation(fields: [equipmentId], references: [id])
+  capaId      String?
+  capa        Capa?      @relation(fields: [capaId], references: [id])
+}
