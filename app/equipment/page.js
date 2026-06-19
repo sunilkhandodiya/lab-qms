@@ -4,6 +4,7 @@ import { locationWhere } from '@/lib/location';
 import { format, differenceInDays } from 'date-fns';
 import { CanDo } from '@/components/RoleGuard';
 import EquipmentForm from './EquipmentForm';
+import FilterBar from '@/components/FilterBar';
 
 function Badge({ value }) {
   if (value == null) return <span className="text-muted">—</span>;
@@ -27,7 +28,9 @@ function DueCell({ date, now }) {
   );
 }
 
-export default async function EquipmentPage() {
+export default async function EquipmentPage({ searchParams }) {
+  const sp = (await searchParams) || {};
+  const filterCalDue = sp.filter === 'caldue';
   const where = await locationWhere();
   const now = new Date();
 
@@ -75,6 +78,11 @@ export default async function EquipmentPage() {
     if (eq.status !== 'ACTIVE') outOfService++;
   }
 
+  // Calibration-due drill-down filter (≤30d incl. overdue)
+  const listEquipment = filterCalDue
+    ? equipment.filter(eq => eq.calibrationDue && differenceInDays(new Date(eq.calibrationDue), now) <= 30)
+    : equipment;
+
   return (
     <div>
       <div className="page-header">
@@ -84,6 +92,8 @@ export default async function EquipmentPage() {
         </div>
         <CanDo permission="equipment:add"><EquipmentForm /></CanDo>
       </div>
+
+      {filterCalDue && <FilterBar label="Calibration due ≤30 days" count={listEquipment.length} clearHref="/equipment" />}
 
       <div className="grid-4" style={{ marginBottom: 24 }}>
         <div className="stat-card stat-accent-blue">
@@ -123,10 +133,10 @@ export default async function EquipmentPage() {
       <div className="section">
         <div className="card">
           <div className="card-title">Equipment List</div>
-          {equipment.length === 0 ? (
+          {listEquipment.length === 0 ? (
             <div className="empty-state">
               <div className="empty-state-icon">🔬</div>
-              No equipment registered for this centre.
+              {filterCalDue ? 'No equipment is due for calibration within 30 days.' : 'No equipment registered for this centre.'}
             </div>
           ) : (
             <div className="table-wrap">
@@ -139,7 +149,7 @@ export default async function EquipmentPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {equipment.map(eq => (
+                  {listEquipment.map(eq => (
                     <tr key={eq.id}>
                       <td className="mono">{eq.assetId}</td>
                       <td style={{ fontWeight: 500 }}>{eq.name}</td>

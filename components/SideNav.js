@@ -34,8 +34,8 @@ export default function SideNav({ role }) {
         item.section
           ? <div key={i} className="nav-section">{item.section}</div>
           : canAccessPage(role, item.page) && (
-            <Link key={item.href} href={item.href} className={`nav-item ${isActive(item.href) ? 'active' : ''}`}>
-              <span className="nav-icon">{item.icon}</span> {item.label}
+            <Link key={item.href} href={item.href} title={item.label} className={`nav-item ${isActive(item.href) ? 'active' : ''}`}>
+              <span className="nav-icon">{item.icon}</span> <span className="nav-label">{item.label}</span>
             </Link>
           )
       )}
@@ -43,8 +43,8 @@ export default function SideNav({ role }) {
         <>
           <div className="nav-section">Administration</div>
           {adminVisible.map(item => (
-            <Link key={item.href} href={item.href} className={`nav-item ${isActive(item.href) ? 'active' : ''}`}>
-              <span className="nav-icon">{item.icon}</span> {item.label}
+            <Link key={item.href} href={item.href} title={item.label} className={`nav-item ${isActive(item.href) ? 'active' : ''}`}>
+              <span className="nav-icon">{item.icon}</span> <span className="nav-label">{item.label}</span>
             </Link>
           ))}
         </>

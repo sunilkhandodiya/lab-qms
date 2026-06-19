@@ -6,6 +6,7 @@ import AuthSessionProvider from '@/components/SessionProvider';
 import UserMenu from '@/components/UserMenu';
 import SideNav from '@/components/SideNav';
 import LocationSwitcher from '@/components/LocationSwitcher';
+import AppShell from '@/components/AppShell';
 import { getLocationContext } from '@/lib/location';
 
 export const metadata = {
@@ -28,34 +29,19 @@ export default async function RootLayout({ children }) {
       <body>
         <AuthSessionProvider session={session}>
           {session ? (
-            <div className="layout">
-              <aside className="sidebar">
-                <div className="sidebar-logo">
-                  <span className="logo-icon">⚗</span>
-                  <span style={{ display: 'flex', flexDirection: 'column' }}>
-                    <span>Lab QMS</span>
-                    <span className="logo-sub">Quality Systems</span>
-                  </span>
-                </div>
-                <SideNav role={role} />
-              </aside>
-
-              <div className="content-col">
-                <header className="topbar">
-                  <div className="topbar-left">
-                    <LocationSwitcher
-                      states={locationCtx.states}
-                      locations={locationCtx.locations}
-                      current={locationCtx.current}
-                    />
-                  </div>
-                  <div className="topbar-right">
-                    <UserMenu />
-                  </div>
-                </header>
-                <main className="main-content">{children}</main>
-              </div>
-            </div>
+            <AppShell
+              sidebar={<SideNav role={role} />}
+              locationSwitcher={
+                <LocationSwitcher
+                  states={locationCtx.states}
+                  locations={locationCtx.locations}
+                  current={locationCtx.current}
+                />
+              }
+              userMenu={<UserMenu />}
+            >
+              {children}
+            </AppShell>
           ) : (
             <main>{children}</main>
           )}

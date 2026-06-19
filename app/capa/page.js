@@ -2,29 +2,43 @@ import { CanDo } from '@/components/RoleGuard';
 // app/capa/page.js
 import { prisma } from '@/lib/prisma';
 import { format, differenceInDays } from 'date-fns';
+import FilterBar from '@/components/FilterBar';
 
 function Badge({ value }) {
   return <span className={`badge badge-${value?.toLowerCase().replace(/_/g,'')}`}>{value?.replace(/_/g,' ')}</span>;
 }
 
-export default async function CAPAPage() {
+export default async function CAPAPage({ searchParams }) {
+  const sp = (await searchParams) || {};
+  const ref = sp.ref || null;
+  const filterOpen = sp.filter === 'open';
+
   const capas = await prisma.capa.findMany({
     include: { owner: true },
     orderBy: [{ status: 'asc' }, { priority: 'asc' }, { createdAt: 'desc' }],
   });
 
   const now = new Date();
-  const open = capas.filter(c => c.status !== 'CLOSED');
-  const closed = capas.filter(c => c.status === 'CLOSED');
 
-  const stats = {
-    total: capas.length,
-    open: open.length,
-    critical: open.filter(c => c.priority === 'CRITICAL').length,
-    overdue: open.filter(c => c.dueDate && isBefore(c.dueDate, now)).length,
-  };
+  // Active filter (from dashboard drill-down)
+  let filterLabel = null;
+  let view = capas;
+  if (ref) { view = capas.filter(c => c.capaNumber === ref); filterLabel = `CAPA ${ref}`; }
+  else if (filterOpen) { view = capas.filter(c => c.status !== 'CLOSED'); filterLabel = 'Open CAPAs'; }
+  const isFiltered = !!filterLabel;
+
+  const open = isFiltered ? view.filter(c => c.status !== 'CLOSED' || ref) : capas.filter(c => c.status !== 'CLOSED');
+  const closed = isFiltered ? [] : capas.filter(c => c.status === 'CLOSED');
 
   function isBefore(d, now) { return new Date(d) < now; }
+
+  const allOpen = capas.filter(c => c.status !== 'CLOSED');
+  const stats = {
+    total: capas.length,
+    open: allOpen.length,
+    critical: allOpen.filter(c => c.priority === 'CRITICAL').length,
+    overdue: allOpen.filter(c => c.dueDate && isBefore(c.dueDate, now)).length,
+  };
 
   return (
     <div>
@@ -37,6 +51,8 @@ export default async function CAPAPage() {
           <CanDo permission="capa:create"><button className="btn btn-primary">+ New CAPA</button></CanDo>
         </div>
       </div>
+
+      {isFiltered && <FilterBar label={filterLabel} count={open.length} clearHref="/capa" />}
 
       <div className="grid-4 section">
         <div className="stat-card stat-accent-blue"><div className="stat-label">Total CAPAs</div><div className="stat-value">{stats.total}</div></div>

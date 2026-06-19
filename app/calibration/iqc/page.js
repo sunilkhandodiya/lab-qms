@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { locationWhere } from '@/lib/location';
 import { format } from 'date-fns';
 import { evaluateWestgard } from '@/lib/westgard';
+import FilterBar from '@/components/FilterBar';
 
 function Badge({ value }) {
   return (
@@ -76,7 +77,10 @@ function LJChart({ mean, sd, results }) {
   );
 }
 
-export default async function IqcPage() {
+export default async function IqcPage({ searchParams }) {
+  const sp = (await searchParams) || {};
+  const filterReject = sp.filter === 'reject';
+
   const where = await locationWhere();
   const analytes = await prisma.qCAnalyte.findMany({
     where,
@@ -88,21 +92,27 @@ export default async function IqcPage() {
     orderBy: { name: 'asc' },
   });
 
+  const hasReject = a => a.levels.some(l => l.results.some(r => r.status === 'REJECT'));
+  const rejectCount = analytes.reduce((n, a) => n + a.levels.reduce((m, l) => m + l.results.filter(r => r.status === 'REJECT').length, 0), 0);
+  const visibleAnalytes = filterReject ? analytes.filter(hasReject) : analytes;
+
   return (
     <div>
       <div className="section-header">
         <div className="section-title">Internal QC — Levey-Jennings</div>
       </div>
 
-      {analytes.length === 0 ? (
+      {filterReject && <FilterBar label="QC rejects" count={rejectCount} clearHref="/calibration/iqc" />}
+
+      {visibleAnalytes.length === 0 ? (
         <div className="card">
           <div className="empty-state">
             <div className="empty-state-icon">📈</div>
-            <div>No internal QC analytes configured.</div>
+            <div>{filterReject ? 'No rejected QC results for this centre. 🎉' : 'No internal QC analytes configured.'}</div>
           </div>
         </div>
       ) : (
-        analytes.map(a => (
+        visibleAnalytes.map(a => (
           <div key={a.id} className="section">
             <div className="levey-jennings">
               <div className="card-title" style={{ marginBottom: 8 }}>
@@ -121,13 +131,15 @@ export default async function IqcPage() {
 
               {a.levels.map(level => {
                 const results = level.results;
+                // when drilling into rejects, skip levels that have none
+                if (filterReject && !results.some(r => r.status === 'REJECT')) return null;
                 // build running westgard flags + z for the recent table
                 const rows = results.map((r, i) => {
                   const slice = results.slice(0, i + 1).map(x => ({ zScore: x.zScore ?? 0 }));
                   const violations = evaluateWestgard(slice);
                   return { ...r, violations };
                 });
-                const recent = rows.slice(-12).reverse();
+                const recent = (filterReject ? rows.filter(r => r.status === 'REJECT') : rows.slice(-12)).reverse();
                 const lvMean = level.mean ?? a.mean;
                 const lvSd = level.sd ?? a.sd;
 

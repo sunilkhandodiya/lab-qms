@@ -2,12 +2,16 @@ import { CanDo } from '@/components/RoleGuard';
 // app/training/page.js
 import { prisma } from '@/lib/prisma';
 import { format } from 'date-fns';
+import FilterBar from '@/components/FilterBar';
 
 function Badge({ value }) {
   return <span className={`badge badge-${value?.toLowerCase().replace(/_/g,'')}`}>{value?.replace(/_/g,' ')}</span>;
 }
 
-export default async function TrainingPage() {
+export default async function TrainingPage({ searchParams }) {
+  const sp = (await searchParams) || {};
+  const filterOverdue = sp.filter === 'overdue';
+
   const trainings = await prisma.training.findMany({
     include: { user: true, document: true },
     orderBy: [{ status: 'asc' }, { dueDate: 'asc' }],
@@ -19,6 +23,8 @@ export default async function TrainingPage() {
     IN_PROGRESS: trainings.filter(t => t.status === 'IN_PROGRESS'),
     COMPLETED: trainings.filter(t => t.status === 'COMPLETED'),
   };
+
+  const rows = filterOverdue ? byStatus.OVERDUE : trainings;
 
   return (
     <div>
@@ -42,8 +48,10 @@ export default async function TrainingPage() {
         ))}
       </div>
 
+      {filterOverdue && <FilterBar label="Overdue training" count={rows.length} clearHref="/training" />}
+
       {/* Overdue - priority section */}
-      {byStatus.OVERDUE.length > 0 && (
+      {!filterOverdue && byStatus.OVERDUE.length > 0 && (
         <div className="section">
           <div className="alert alert-error">
             ⚠ {byStatus.OVERDUE.length} training assignment(s) are overdue
@@ -66,7 +74,7 @@ export default async function TrainingPage() {
               </tr>
             </thead>
             <tbody>
-              {trainings.map(t => (
+              {rows.map(t => (
                 <tr key={t.id}>
                   <td style={{ fontWeight: 500 }}>{t.user.name}</td>
                   <td style={{ maxWidth: 200 }}>{t.document.title}</td>

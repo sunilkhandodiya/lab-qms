@@ -2,6 +2,13 @@
 import { prisma } from '@/lib/prisma';
 import { locationWhere } from '@/lib/location';
 import { format } from 'date-fns';
+import FilterBar from '@/components/FilterBar';
+
+// Is a result "flagged" (borderline / unacceptable / |score|>2)?
+function isFlagged(r, isZ) {
+  const score = isZ ? r.zScore : r.sdi;
+  return r.grade === 'BORDERLINE' || r.grade === 'UNACCEPTABLE' || (score != null && Math.abs(score) > 2);
+}
 
 function Badge({ value }) {
   if (value == null) return <span className="text-muted">—</span>;
@@ -20,7 +27,13 @@ function ScoreCell({ value }) {
   return <span className={`zscore-cell ${cls}`}>{value > 0 ? '+' : ''}{value.toFixed(2)}</span>;
 }
 
-export default async function EqasPage() {
+export default async function EqasPage({ searchParams }) {
+  const sp = (await searchParams) || {};
+  const filterFlagged = sp.filter === 'flagged';
+  const analyteFilter = sp.analyte || null;
+  const isFiltered = filterFlagged || !!analyteFilter;
+  const filterLabel = analyteFilter ? `Analyte: ${analyteFilter}` : 'Flagged results (borderline / unacceptable)';
+
   const where = await locationWhere();
   const schemes = await prisma.eQASScheme.findMany({
     where,
@@ -33,11 +46,22 @@ export default async function EqasPage() {
     orderBy: { name: 'asc' },
   });
 
+  // Count matching results for the filter chip
+  let matchCount = 0;
+  for (const s of schemes) {
+    const isZ = (s.scoreType || 'SDI').toUpperCase() === 'ZSCORE';
+    const latest = s.cycles[0];
+    if (!latest) continue;
+    matchCount += latest.results.filter(r => analyteFilter ? r.analyte === analyteFilter : isFlagged(r, isZ)).length;
+  }
+
   return (
     <div>
       <div className="section-header">
         <div className="section-title">EQAS / Proficiency Testing</div>
       </div>
+
+      {isFiltered && <FilterBar label={filterLabel} count={matchCount} clearHref="/calibration/eqas" />}
 
       {schemes.length === 0 ? (
         <div className="card">
@@ -50,6 +74,11 @@ export default async function EqasPage() {
         schemes.map(scheme => {
           const isZ = (scheme.scoreType || 'SDI').toUpperCase() === 'ZSCORE';
           const latest = scheme.cycles[0];
+          const displayedResults = latest
+            ? latest.results.filter(r => !isFiltered || (analyteFilter ? r.analyte === analyteFilter : isFlagged(r, isZ)))
+            : [];
+          // When a filter is active, hide schemes with no matching results
+          if (isFiltered && displayedResults.length === 0) return null;
           return (
             <div key={scheme.id} className="card" style={{ marginBottom: 16 }}>
               <div className="card-title">
@@ -73,7 +102,7 @@ export default async function EqasPage() {
                     </span>
                   </div>
 
-                  {latest.results.length === 0 ? (
+                  {displayedResults.length === 0 ? (
                     <div className="text-muted" style={{ fontSize: 13 }}>No results for this cycle.</div>
                   ) : (
                     <div className="table-wrap">
@@ -85,7 +114,7 @@ export default async function EqasPage() {
                           </tr>
                         </thead>
                         <tbody>
-                          {latest.results.map(r => {
+                          {displayedResults.map(r => {
                             const score = isZ ? r.zScore : r.sdi;
                             const unsatisfactory = score != null && Math.abs(score) > 2;
                             return (

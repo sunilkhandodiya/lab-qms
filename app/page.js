@@ -126,27 +126,27 @@ export default async function Dashboard() {
 
       {/* Summary stat cards — each links to the relevant module */}
       <div className="grid-5 section">
-        <Link href="/capa" className="stat-card stat-accent-blue" style={{ textDecoration: 'none', color: 'inherit' }}>
+        <Link href="/capa?filter=open" className="stat-card stat-accent-blue" style={{ textDecoration: 'none', color: 'inherit' }}>
           <div className="stat-label">Open CAPAs</div>
           <div className="stat-value">{openCapas}</div>
           <div className="stat-sub">{criticalOpenCapas} critical →</div>
         </Link>
-        <Link href="/equipment" className="stat-card stat-accent-amber" style={{ textDecoration: 'none', color: 'inherit' }}>
+        <Link href="/equipment?filter=caldue" className="stat-card stat-accent-amber" style={{ textDecoration: 'none', color: 'inherit' }}>
           <div className="stat-label">Calibration Due ≤30d</div>
           <div className="stat-value">{calibDue}</div>
           <div className="stat-sub">{calibOverdue} overdue →</div>
         </Link>
-        <Link href="/calibration/iqc" className="stat-card stat-accent-red" style={{ textDecoration: 'none', color: 'inherit' }}>
+        <Link href="/calibration/iqc?filter=reject" className="stat-card stat-accent-red" style={{ textDecoration: 'none', color: 'inherit' }}>
           <div className="stat-label">QC Rejects (recent)</div>
           <div className="stat-value">{qcRejects}</div>
           <div className="stat-sub">last 30 results →</div>
         </Link>
-        <Link href="/calibration/eqas" className="stat-card stat-accent-purple" style={{ textDecoration: 'none', color: 'inherit' }}>
+        <Link href="/calibration/eqas?filter=flagged" className="stat-card stat-accent-purple" style={{ textDecoration: 'none', color: 'inherit' }}>
           <div className="stat-label">EQAS Flags</div>
           <div className="stat-value">{eqasFlags}</div>
           <div className="stat-sub">borderline / unacceptable →</div>
         </Link>
-        <Link href="/training" className="stat-card stat-accent-teal" style={{ textDecoration: 'none', color: 'inherit' }}>
+        <Link href="/training?filter=overdue" className="stat-card stat-accent-teal" style={{ textDecoration: 'none', color: 'inherit' }}>
           <div className="stat-label">Overdue Training</div>
           <div className="stat-value">{overdueTraining}</div>
           <div className="stat-sub">assignments overdue →</div>
@@ -197,7 +197,7 @@ export default async function Dashboard() {
                 </thead>
                 <tbody>
                   {openCapaList.map(c => (
-                    <LinkRow key={c.id} href="/capa" title={`Open ${c.capaNumber}`}>
+                    <LinkRow key={c.id} href={`/capa?ref=${encodeURIComponent(c.capaNumber)}`} title={`Open ${c.capaNumber}`}>
                       <td className="mono" style={{ fontSize: 12 }}>{c.capaNumber}</td>
                       <td style={{ fontWeight: 500, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.title}</td>
                       <td><span className={`priority-${c.priority.toLowerCase()}`}>{c.priority}</span></td>
@@ -227,7 +227,7 @@ export default async function Dashboard() {
                   {recentEqas.map(r => {
                     const score = r.sdi ?? r.zScore;
                     return (
-                      <LinkRow key={r.id} href="/calibration/eqas" title="Open EQAS">
+                      <LinkRow key={r.id} href={`/calibration/eqas?analyte=${encodeURIComponent(r.analyte)}`} title={`Open ${r.analyte}`}>
                         <td className="text-secondary" style={{ fontSize: 12 }}>{r.cycle?.scheme?.name ?? '—'}</td>
                         <td className="mono text-muted" style={{ fontSize: 11 }}>{r.cycle?.cycleRef ?? '—'}</td>
                         <td style={{ fontWeight: 500 }}>{r.analyte}</td>

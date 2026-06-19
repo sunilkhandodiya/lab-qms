@@ -75,7 +75,31 @@ button { font-family: inherit; }
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+  overflow-x: hidden;
+  transition: width 0.18s ease, min-width 0.18s ease;
 }
+.logo-text { display: flex; flex-direction: column; }
+
+/* ── Collapsed sidebar (icon rail) ─────────────────────────────────────────── */
+.sidebar-collapsed .sidebar { width: 66px; min-width: 66px; }
+.sidebar-collapsed .logo-text { display: none; }
+.sidebar-collapsed .sidebar-logo { justify-content: center; padding-left: 0; padding-right: 0; }
+.sidebar-collapsed .nav-label { display: none; }
+.sidebar-collapsed .nav-item { justify-content: center; padding-left: 0; padding-right: 0; gap: 0; }
+.sidebar-collapsed .nav-icon { width: auto; }
+.sidebar-collapsed .nav-section {
+  height: 0; padding: 0; overflow: hidden;
+  border-top: 1px solid var(--border); margin: 8px 14px;
+}
+
+/* ── Sidebar toggle button (topbar) ────────────────────────────────────────── */
+.sidebar-toggle {
+  display: inline-grid; place-items: center; width: 32px; height: 32px;
+  border: 1px solid var(--border); background: var(--bg-surface); color: var(--text-secondary);
+  border-radius: var(--radius); cursor: pointer; font-size: 15px; line-height: 1;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.sidebar-toggle:hover { background: var(--bg-hover); color: var(--text-primary); border-color: var(--border-strong); }
 
 .sidebar-logo {
   padding: 18px 20px;
@@ -393,6 +417,23 @@ tbody tr:hover td { background: var(--bg-subtle); }
   font-size: 11px; font-weight: 600; letter-spacing: 0.2px;
 }
 .role-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+
+/* ── Active filter bar / chip ─────────────────────────────────────────────── */
+.filter-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
+.filter-chip {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--accent-blue-soft); color: var(--accent-blue);
+  border: 1px solid #bfdbfe; border-radius: 20px; padding: 6px 6px 6px 13px;
+  font-size: 13px; font-weight: 500;
+}
+.filter-chip strong { font-weight: 700; }
+.filter-chip-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent-blue); }
+.filter-chip-x {
+  display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%;
+  background: rgba(37, 99, 235, 0.15); color: var(--accent-blue); text-decoration: none;
+  font-size: 15px; line-height: 1; transition: background 0.12s, color 0.12s;
+}
+.filter-chip-x:hover { background: var(--accent-blue); color: #fff; }
 
 /* ── Log registry tiles (General Quality) ────────────────────────────────── */
 .tile-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
