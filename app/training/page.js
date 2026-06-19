@@ -2,6 +2,7 @@ import { CanDo } from '@/components/RoleGuard';
 // app/training/page.js
 import { prisma } from '@/lib/prisma';
 import { format } from 'date-fns';
+import Link from 'next/link';
 import FilterBar from '@/components/FilterBar';
 
 function Badge({ value }) {
@@ -10,7 +11,6 @@ function Badge({ value }) {
 
 export default async function TrainingPage({ searchParams }) {
   const sp = (await searchParams) || {};
-  const filterOverdue = sp.filter === 'overdue';
 
   const trainings = await prisma.training.findMany({
     include: { user: true, document: true },
@@ -24,7 +24,8 @@ export default async function TrainingPage({ searchParams }) {
     COMPLETED: trainings.filter(t => t.status === 'COMPLETED'),
   };
 
-  const rows = filterOverdue ? byStatus.OVERDUE : trainings;
+  const activeStatus = sp.status || (sp.filter === 'overdue' ? 'OVERDUE' : null);
+  const rows = activeStatus ? trainings.filter(t => t.status === activeStatus) : trainings;
 
   return (
     <div>
@@ -38,24 +39,24 @@ export default async function TrainingPage({ searchParams }) {
         </div>
       </div>
 
+      {activeStatus && <FilterBar label={`${activeStatus.replace('_', ' ')} training`} count={rows.length} clearHref="/training" />}
+
       {/* Stats */}
       <div className="grid-4 section">
         {Object.entries(byStatus).map(([status, items]) => (
-          <div key={status} className={`stat-card ${status === 'OVERDUE' ? 'stat-accent-red' : status === 'COMPLETED' ? 'stat-accent-green' : 'stat-accent-amber'}`}>
+          <Link key={status} href={`/training?status=${status}`} className={`stat-card ${status === 'OVERDUE' ? 'stat-accent-red' : status === 'COMPLETED' ? 'stat-accent-green' : 'stat-accent-amber'}`} style={{ textDecoration: 'none', color: 'inherit' }}>
             <div className="stat-label">{status.replace('_', ' ')}</div>
             <div className="stat-value">{items.length}</div>
-          </div>
+          </Link>
         ))}
       </div>
 
-      {filterOverdue && <FilterBar label="Overdue training" count={rows.length} clearHref="/training" />}
-
       {/* Overdue - priority section */}
-      {!filterOverdue && byStatus.OVERDUE.length > 0 && (
+      {!activeStatus && byStatus.OVERDUE.length > 0 && (
         <div className="section">
-          <div className="alert alert-error">
+          <Link href="/training?status=OVERDUE" className="alert alert-error" style={{ textDecoration: 'none' }}>
             ⚠ {byStatus.OVERDUE.length} training assignment(s) are overdue
-          </div>
+          </Link>
         </div>
       )}
 

@@ -1,9 +1,11 @@
 // app/sop/page.js
 // Standard Operating Procedure module — browse controlled documents (SOPs / Manuals)
 // grouped by department, with review-due colouring per the Quality Model SOP.
+import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import { format, differenceInCalendarDays } from 'date-fns';
 import { CanDo } from '@/components/RoleGuard';
+import FilterBar from '@/components/FilterBar';
 import SopForm from './SopForm';
 
 const GENERAL = 'General / Quality System';
@@ -29,24 +31,43 @@ function ReviewDue({ date }) {
   );
 }
 
-export default async function SopPage() {
+export default async function SopPage({ searchParams }) {
+  const sp = (await searchParams) || {};
+
   const docs = await prisma.document.findMany({
     include: { author: true, approvals: { include: { reviewer: true } } },
     orderBy: { docNumber: 'asc' },
   });
 
-  // Stats
+  // Stats — always from the FULL document list
   const total = docs.length;
   const effective = docs.filter(d => d.status === 'EFFECTIVE').length;
   const inReview = docs.filter(d => d.status === 'IN_REVIEW').length;
-  const reviewDueSoon = docs.filter(d => {
+  const isReviewDue = d => {
     if (!d.reviewDue) return false;
     return differenceInCalendarDays(new Date(d.reviewDue), new Date()) <= 60;
-  }).length;
+  };
+  const reviewDueSoon = docs.filter(isReviewDue).length;
 
-  // Group by department
+  // Active filter
+  const statusFilter = sp.status === 'EFFECTIVE' || sp.status === 'IN_REVIEW' ? sp.status : null;
+  const dueFilter = sp.due === 'review';
+  let filtered = docs;
+  let filterLabel = null;
+  if (statusFilter === 'EFFECTIVE') {
+    filtered = docs.filter(d => d.status === 'EFFECTIVE');
+    filterLabel = 'Effective documents';
+  } else if (statusFilter === 'IN_REVIEW') {
+    filtered = docs.filter(d => d.status === 'IN_REVIEW');
+    filterLabel = 'In review';
+  } else if (dueFilter) {
+    filtered = docs.filter(isReviewDue);
+    filterLabel = 'Review due ≤60 days';
+  }
+
+  // Group filtered docs by department
   const groups = {};
-  for (const d of docs) {
+  for (const d of filtered) {
     const key = d.department || GENERAL;
     (groups[key] ||= []).push(d);
   }
@@ -68,23 +89,27 @@ export default async function SopPage() {
         </div>
       </div>
 
+      {filterLabel && (
+        <FilterBar label={filterLabel} count={filtered.length} clearHref="/sop" />
+      )}
+
       <div className="grid-4" style={{ marginBottom: 22 }}>
-        <div className="stat-card stat-accent-blue">
+        <Link href="/sop" className="stat-card stat-accent-blue" style={{ textDecoration: 'none', color: 'inherit' }}>
           <div className="stat-label">Total Documents</div>
           <div className="stat-value">{total}</div>
-        </div>
-        <div className="stat-card stat-accent-green">
+        </Link>
+        <Link href="/sop?status=EFFECTIVE" className="stat-card stat-accent-green" style={{ textDecoration: 'none', color: 'inherit' }}>
           <div className="stat-label">Effective</div>
           <div className="stat-value">{effective}</div>
-        </div>
-        <div className="stat-card stat-accent-amber">
+        </Link>
+        <Link href="/sop?status=IN_REVIEW" className="stat-card stat-accent-amber" style={{ textDecoration: 'none', color: 'inherit' }}>
           <div className="stat-label">In Review</div>
           <div className="stat-value">{inReview}</div>
-        </div>
-        <div className="stat-card stat-accent-red">
+        </Link>
+        <Link href="/sop?due=review" className="stat-card stat-accent-red" style={{ textDecoration: 'none', color: 'inherit' }}>
           <div className="stat-label">Review Due ≤60 days</div>
           <div className="stat-value">{reviewDueSoon}</div>
-        </div>
+        </Link>
       </div>
 
       {orderedDepts.length === 0 ? (

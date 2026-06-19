@@ -26,6 +26,13 @@ export default async function RootLayout({ children }) {
 
   return (
     <html lang="en">
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('qms_theme');if(t==='dark'){document.documentElement.setAttribute('data-theme','dark');}}catch(e){}})();`,
+          }}
+        />
+      </head>
       <body>
         <AuthSessionProvider session={session}>
           {session ? (

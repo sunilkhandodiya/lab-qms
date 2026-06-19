@@ -1,5 +1,6 @@
 import { CanDo } from '@/components/RoleGuard';
 // app/capa/page.js
+import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import { format, differenceInDays } from 'date-fns';
 import FilterBar from '@/components/FilterBar';
@@ -11,7 +12,7 @@ function Badge({ value }) {
 export default async function CAPAPage({ searchParams }) {
   const sp = (await searchParams) || {};
   const ref = sp.ref || null;
-  const filterOpen = sp.filter === 'open';
+  const filter = sp.filter || null; // open | critical | overdue
 
   const capas = await prisma.capa.findMany({
     include: { owner: true },
@@ -20,18 +21,10 @@ export default async function CAPAPage({ searchParams }) {
 
   const now = new Date();
 
-  // Active filter (from dashboard drill-down)
-  let filterLabel = null;
-  let view = capas;
-  if (ref) { view = capas.filter(c => c.capaNumber === ref); filterLabel = `CAPA ${ref}`; }
-  else if (filterOpen) { view = capas.filter(c => c.status !== 'CLOSED'); filterLabel = 'Open CAPAs'; }
-  const isFiltered = !!filterLabel;
-
-  const open = isFiltered ? view.filter(c => c.status !== 'CLOSED' || ref) : capas.filter(c => c.status !== 'CLOSED');
-  const closed = isFiltered ? [] : capas.filter(c => c.status === 'CLOSED');
-
   function isBefore(d, now) { return new Date(d) < now; }
 
+  // Stat-card counts — always computed from the FULL dataset so the numbers
+  // never change when a filter is active.
   const allOpen = capas.filter(c => c.status !== 'CLOSED');
   const stats = {
     total: capas.length,
@@ -39,6 +32,29 @@ export default async function CAPAPage({ searchParams }) {
     critical: allOpen.filter(c => c.priority === 'CRITICAL').length,
     overdue: allOpen.filter(c => c.dueDate && isBefore(c.dueDate, now)).length,
   };
+
+  // Active filter (from stat-card / dashboard drill-down)
+  let filterLabel = null;
+  let view = capas;
+  if (ref) {
+    view = capas.filter(c => c.capaNumber === ref);
+    filterLabel = `CAPA ${ref}`;
+  } else if (filter === 'open') {
+    view = allOpen;
+    filterLabel = 'Open CAPAs';
+  } else if (filter === 'critical') {
+    view = allOpen.filter(c => c.priority === 'CRITICAL');
+    filterLabel = 'Critical open CAPAs';
+  } else if (filter === 'overdue') {
+    view = allOpen.filter(c => c.dueDate && isBefore(c.dueDate, now));
+    filterLabel = 'Overdue CAPAs';
+  }
+  const isFiltered = !!filterLabel;
+
+  // When filtered, the table + detail cards show the filtered view (incl. a
+  // single ref'd CAPA even if it is CLOSED) and the Closed section is hidden.
+  const open = isFiltered ? view : allOpen;
+  const closed = isFiltered ? [] : capas.filter(c => c.status === 'CLOSED');
 
   return (
     <div>
@@ -52,13 +68,13 @@ export default async function CAPAPage({ searchParams }) {
         </div>
       </div>
 
-      {isFiltered && <FilterBar label={filterLabel} count={open.length} clearHref="/capa" />}
+      {isFiltered && <FilterBar label={filterLabel} count={view.length} clearHref="/capa" />}
 
       <div className="grid-4 section">
-        <div className="stat-card stat-accent-blue"><div className="stat-label">Total CAPAs</div><div className="stat-value">{stats.total}</div></div>
-        <div className="stat-card stat-accent-amber"><div className="stat-label">Open</div><div className="stat-value">{stats.open}</div></div>
-        <div className="stat-card stat-accent-red"><div className="stat-label">Critical</div><div className="stat-value">{stats.critical}</div></div>
-        <div className="stat-card stat-accent-red"><div className="stat-label">Overdue</div><div className="stat-value">{stats.overdue}</div></div>
+        <Link href="/capa" className="stat-card stat-accent-blue" style={{ textDecoration: 'none', color: 'inherit' }}><div className="stat-label">Total CAPAs</div><div className="stat-value">{stats.total}</div></Link>
+        <Link href="/capa?filter=open" className="stat-card stat-accent-amber" style={{ textDecoration: 'none', color: 'inherit' }}><div className="stat-label">Open</div><div className="stat-value">{stats.open}</div></Link>
+        <Link href="/capa?filter=critical" className="stat-card stat-accent-red" style={{ textDecoration: 'none', color: 'inherit' }}><div className="stat-label">Critical</div><div className="stat-value">{stats.critical}</div></Link>
+        <Link href="/capa?filter=overdue" className="stat-card stat-accent-red" style={{ textDecoration: 'none', color: 'inherit' }}><div className="stat-label">Overdue</div><div className="stat-value">{stats.overdue}</div></Link>
       </div>
 
       <div className="section">

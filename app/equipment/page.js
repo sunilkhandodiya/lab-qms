@@ -1,4 +1,5 @@
 // app/equipment/page.js — SOP "Equipment Maintenance & Calibration Log"
+import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import { locationWhere } from '@/lib/location';
 import { format, differenceInDays } from 'date-fns';
@@ -30,7 +31,7 @@ function DueCell({ date, now }) {
 
 export default async function EquipmentPage({ searchParams }) {
   const sp = (await searchParams) || {};
-  const filterCalDue = sp.filter === 'caldue';
+  const filter = sp.filter;
   const where = await locationWhere();
   const now = new Date();
 
@@ -78,10 +79,21 @@ export default async function EquipmentPage({ searchParams }) {
     if (eq.status !== 'ACTIVE') outOfService++;
   }
 
-  // Calibration-due drill-down filter (≤30d incl. overdue)
-  const listEquipment = filterCalDue
-    ? equipment.filter(eq => eq.calibrationDue && differenceInDays(new Date(eq.calibrationDue), now) <= 30)
-    : equipment;
+  // Drill-down filter for the Equipment List section.
+  const FILTER_LABELS = {
+    caldue: 'Calibration due ≤30 days',
+    pmdue: 'PM due ≤30 days',
+    oos: 'Out of service',
+  };
+  const filterLabel = FILTER_LABELS[filter];
+  let listEquipment = equipment;
+  if (filter === 'caldue') {
+    listEquipment = equipment.filter(eq => eq.calibrationDue && differenceInDays(new Date(eq.calibrationDue), now) <= 30);
+  } else if (filter === 'pmdue') {
+    listEquipment = equipment.filter(eq => eq.pmDue && differenceInDays(new Date(eq.pmDue), now) <= 30);
+  } else if (filter === 'oos') {
+    listEquipment = equipment.filter(eq => eq.status !== 'ACTIVE');
+  }
 
   return (
     <div>
@@ -93,38 +105,38 @@ export default async function EquipmentPage({ searchParams }) {
         <CanDo permission="equipment:add"><EquipmentForm /></CanDo>
       </div>
 
-      {filterCalDue && <FilterBar label="Calibration due ≤30 days" count={listEquipment.length} clearHref="/equipment" />}
+      {filterLabel && <FilterBar label={filterLabel} count={listEquipment.length} clearHref="/equipment" />}
 
       <div className="grid-4" style={{ marginBottom: 24 }}>
-        <div className="stat-card stat-accent-blue">
+        <Link href="/equipment" className="stat-card stat-accent-blue" style={{ textDecoration: 'none', color: 'inherit' }}>
           <div className="stat-label">Total Equipment</div>
           <div className="stat-value">{equipment.length}</div>
-        </div>
-        <div className="stat-card stat-accent-amber">
+        </Link>
+        <Link href="/equipment?filter=caldue" className="stat-card stat-accent-amber" style={{ textDecoration: 'none', color: 'inherit' }}>
           <div className="stat-label">Calibration Due ≤30d</div>
           <div className="stat-value">{calibDueSoon}</div>
-        </div>
-        <div className="stat-card stat-accent-teal">
+        </Link>
+        <Link href="/equipment?filter=pmdue" className="stat-card stat-accent-teal" style={{ textDecoration: 'none', color: 'inherit' }}>
           <div className="stat-label">PM Due ≤30d</div>
           <div className="stat-value">{pmDueSoon}</div>
-        </div>
-        <div className="stat-card stat-accent-red">
+        </Link>
+        <Link href="/equipment?filter=oos" className="stat-card stat-accent-red" style={{ textDecoration: 'none', color: 'inherit' }}>
           <div className="stat-label">Out of Service</div>
           <div className="stat-value">{outOfService}</div>
-        </div>
+        </Link>
       </div>
 
       {(calibOverdue > 0 || pmOverdue > 0) && (
         <div style={{ marginBottom: 24, display: 'flex', flexDirection: 'column', gap: 10 }}>
           {calibOverdue > 0 && (
-            <div className="alert alert-error">
+            <Link href="/equipment?filter=caldue" className="alert alert-error" style={{ textDecoration: 'none' }}>
               {calibOverdue} instrument{calibOverdue > 1 ? 's are' : ' is'} overdue for calibration.
-            </div>
+            </Link>
           )}
           {pmOverdue > 0 && (
-            <div className="alert alert-warn">
+            <Link href="/equipment?filter=pmdue" className="alert alert-warn" style={{ textDecoration: 'none' }}>
               {pmOverdue} instrument{pmOverdue > 1 ? 's are' : ' is'} overdue for preventive maintenance.
-            </div>
+            </Link>
           )}
         </div>
       )}
@@ -136,7 +148,13 @@ export default async function EquipmentPage({ searchParams }) {
           {listEquipment.length === 0 ? (
             <div className="empty-state">
               <div className="empty-state-icon">🔬</div>
-              {filterCalDue ? 'No equipment is due for calibration within 30 days.' : 'No equipment registered for this centre.'}
+              {filter === 'caldue'
+                ? 'No equipment is due for calibration within 30 days.'
+                : filter === 'pmdue'
+                ? 'No equipment is due for preventive maintenance within 30 days.'
+                : filter === 'oos'
+                ? 'No equipment is out of service.'
+                : 'No equipment registered for this centre.'}
             </div>
           ) : (
             <div className="table-wrap">

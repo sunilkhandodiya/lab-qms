@@ -1,7 +1,9 @@
 // app/risk/page.js — SOP "Risk Assessment" (NABL / ISO 15189:2022)
+import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import { locationWhere } from '@/lib/location';
 import { CanDo } from '@/components/RoleGuard';
+import FilterBar from '@/components/FilterBar';
 import RiskForm from './RiskForm';
 
 const STAGE_ORDER = ['SAFETY', 'PRE_ANALYTICAL', 'ANALYTICAL', 'POST_ANALYTICAL', 'OTHER'];
@@ -27,7 +29,8 @@ function Approval({ value }) {
     : <span className="text-muted">—</span>;
 }
 
-export default async function RiskPage() {
+export default async function RiskPage({ searchParams }) {
+  const sp = (await searchParams) || {};
   const where = await locationWhere();
 
   const risks = await prisma.riskAssessment.findMany({
@@ -39,9 +42,26 @@ export default async function RiskPage() {
   const ltApprovedCount = risks.filter(r => r.ltApproved).length;
   const drApprovedCount = risks.filter(r => r.drApproved).length;
 
-  // Group rows by stage
+  // Active filter
+  const level = sp.level;
+  const appr = sp.appr;
+
+  let filtered = risks;
+  let filterLabel = null;
+  if (level === 'HIGH') {
+    filtered = risks.filter(r => r.riskLevel === 'HIGH');
+    filterLabel = 'High risks';
+  } else if (appr === 'lt') {
+    filtered = risks.filter(r => r.ltApproved === true);
+    filterLabel = 'LT approved';
+  } else if (appr === 'dr') {
+    filtered = risks.filter(r => r.drApproved === true);
+    filterLabel = 'DR approved';
+  }
+
+  // Group rows by stage (after filtering)
   const byStage = {};
-  for (const r of risks) (byStage[r.stage] ||= []).push(r);
+  for (const r of filtered) (byStage[r.stage] ||= []).push(r);
 
   return (
     <div>
@@ -53,26 +73,30 @@ export default async function RiskPage() {
         <CanDo permission="risk:create"><RiskForm /></CanDo>
       </div>
 
+      {filterLabel && (
+        <FilterBar label={filterLabel} count={filtered.length} clearHref="/risk" />
+      )}
+
       <div className="grid-4" style={{ marginBottom: 24 }}>
-        <div className="stat-card stat-accent-red">
+        <Link href="/risk?level=HIGH" className="stat-card stat-accent-red" style={{ textDecoration: 'none', color: 'inherit' }}>
           <div className="stat-label">High Risks</div>
           <div className="stat-value">{highCount}</div>
-        </div>
-        <div className="stat-card stat-accent-blue">
+        </Link>
+        <Link href="/risk" className="stat-card stat-accent-blue" style={{ textDecoration: 'none', color: 'inherit' }}>
           <div className="stat-label">Total Risks</div>
           <div className="stat-value">{risks.length}</div>
-        </div>
-        <div className="stat-card stat-accent-teal">
+        </Link>
+        <Link href="/risk?appr=lt" className="stat-card stat-accent-teal" style={{ textDecoration: 'none', color: 'inherit' }}>
           <div className="stat-label">LT Approved</div>
           <div className="stat-value">{ltApprovedCount}</div>
-        </div>
-        <div className="stat-card stat-accent-green">
+        </Link>
+        <Link href="/risk?appr=dr" className="stat-card stat-accent-green" style={{ textDecoration: 'none', color: 'inherit' }}>
           <div className="stat-label">DR Approved</div>
           <div className="stat-value">{drApprovedCount}</div>
-        </div>
+        </Link>
       </div>
 
-      {risks.length === 0 ? (
+      {filtered.length === 0 ? (
         <div className="card">
           <div className="empty-state">
             <div className="empty-state-icon">⚠️</div>

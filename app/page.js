@@ -112,16 +112,16 @@ export default async function Dashboard() {
         </div>
       </div>
 
-      {/* Alert banners */}
+      {/* Alert banners — click to open the affected records */}
       {calibOverdue > 0 && (
-        <div className="alert alert-error">
+        <Link href="/equipment?filter=caldue" className="alert alert-error" style={{ textDecoration: 'none' }}>
           ⚠ {calibOverdue} instrument{calibOverdue === 1 ? '' : 's'} overdue for calibration — action required.
-        </div>
+        </Link>
       )}
       {qcRejects > 0 && (
-        <div className="alert alert-warn">
+        <Link href="/calibration/iqc?filter=reject" className="alert alert-warn" style={{ textDecoration: 'none' }}>
           ◉ {qcRejects} QC reject{qcRejects === 1 ? '' : 's'} in the last 30 results — review affected analytes.
-        </div>
+        </Link>
       )}
 
       {/* Summary stat cards — each links to the relevant module */}

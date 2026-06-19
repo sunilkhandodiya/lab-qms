@@ -49,31 +49,42 @@ function LJChart({ mean, sd, results }) {
     .join(' ');
 
   return (
-    <div className="lj-chart">
-      <svg className="lj-svg" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet">
-        {sdLines.map(l => {
-          const yv = mean + l.k * sd;
-          return (
-            <g key={l.label}>
-              <line
-                x1={padL} y1={y(yv)} x2={W - padR} y2={y(yv)}
-                stroke={lineColor(l.cls)}
-                strokeWidth={l.k === 0 ? 1.4 : 1}
-                strokeDasharray={l.k === 0 ? '0' : '4 4'}
-                opacity={l.k === 0 ? 0.9 : 0.6}
-              />
-              <text x={4} y={y(yv) + 3} fontSize="9" fill="var(--text-muted)" fontFamily="var(--font-mono)">{l.label}</text>
-            </g>
-          );
-        })}
-        {n > 0 && <path d={path} fill="none" stroke="var(--accent-blue)" strokeWidth="1.4" opacity="0.55" />}
-        {results.map((r, i) => (
-          <circle key={r.id} cx={x(i)} cy={y(r.value)} r="3.5" fill={pointColor(r.zScore)} stroke="#fff" strokeWidth="1">
-            <title>{`${format(new Date(r.measuredAt), 'dd MMM yyyy')}: ${r.value} (z=${r.zScore != null ? r.zScore.toFixed(2) : '—'})`}</title>
-          </circle>
-        ))}
-      </svg>
-    </div>
+    <>
+      <div className="lj-chart">
+        <svg className="lj-svg" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet">
+          {sdLines.map(l => {
+            const yv = mean + l.k * sd;
+            return (
+              <g key={l.label}>
+                <line
+                  x1={padL} y1={y(yv)} x2={W - padR} y2={y(yv)}
+                  stroke={lineColor(l.cls)}
+                  strokeWidth={l.k === 0 ? 1.4 : 1}
+                  strokeDasharray={l.k === 0 ? '0' : '4 4'}
+                  opacity={l.k === 0 ? 0.9 : 0.6}
+                />
+                <text x={4} y={y(yv) + 3} fontSize="9" fill="var(--text-muted)" fontFamily="var(--font-mono)">{l.label}</text>
+              </g>
+            );
+          })}
+          {n > 0 && <path d={path} fill="none" stroke="var(--accent-blue)" strokeWidth="1.4" opacity="0.55" />}
+          {results.map((r, i) => (
+            <circle key={r.id} cx={x(i)} cy={y(r.value)} r="3.5" fill={pointColor(r.zScore)} stroke="#fff" strokeWidth="1">
+              <title>{`${format(new Date(r.measuredAt), 'dd MMM yyyy HH:mm')}\nValue: ${r.value}\nZ-score: ${r.zScore != null ? r.zScore.toFixed(2) : '—'}\nStatus: ${r.status}`}</title>
+            </circle>
+          ))}
+        </svg>
+      </div>
+      <div className="lj-legend">
+        <span className="lj-leg" style={{ color: 'var(--accent-blue)' }}><span className="lj-swatch" /> Mean</span>
+        <span className="lj-leg" style={{ color: 'var(--warning)' }}><span className="lj-swatch dashed" /> ±2SD</span>
+        <span className="lj-leg" style={{ color: 'var(--reject)' }}><span className="lj-swatch dashed" /> ±3SD</span>
+        <span className="lj-leg"><span className="lj-dot" style={{ background: 'var(--accept)' }} /> In control</span>
+        <span className="lj-leg"><span className="lj-dot" style={{ background: 'var(--warning)' }} /> &gt;2SD warning</span>
+        <span className="lj-leg"><span className="lj-dot" style={{ background: 'var(--reject)' }} /> &gt;3SD reject</span>
+        <span className="lj-leg text-muted">Hover a point for details</span>
+      </div>
+    </>
   );
 }
 

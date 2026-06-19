@@ -31,7 +31,7 @@ function PermissionMatrix({ role }) {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, fontSize: 11 }}>
       {Object.entries(groups).map(([group, ps]) => ps.length > 0 && (
-        <div key={group} style={{ background: 'var(--bg-secondary)', borderRadius: 6, padding: '8px 10px' }}>
+        <div key={group} style={{ background: 'var(--bg-subtle)', borderRadius: 6, padding: '8px 10px' }}>
           <div style={{ fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 4, fontSize: 10, textTransform: 'uppercase', letterSpacing: 1 }}>{group}</div>
           {ps.map(p => (
             <div key={p} style={{ color: 'var(--accent-green)', fontSize: 10, display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -63,7 +63,7 @@ function CreateUserModal({ onClose, onCreated }) {
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}
       onClick={e => e.target === e.currentTarget && onClose()}>
-      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, width: '100%', maxWidth: 500 }}>
+      <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12, width: '100%', maxWidth: 500 }}>
         <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontSize: 17, fontWeight: 600 }}>Create New User</span>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', fontSize: 20 }}>×</button>
@@ -125,7 +125,7 @@ function EditUserModal({ user, onClose, onUpdated }) {
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}
       onClick={e => e.target === e.currentTarget && onClose()}>
-      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, width: '100%', maxWidth: 500 }}>
+      <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12, width: '100%', maxWidth: 500 }}>
         <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontSize: 17, fontWeight: 600 }}>Edit User</span>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', fontSize: 20 }}>×</button>
@@ -220,21 +220,36 @@ export default function UsersPage() {
         </div>
       </div>
 
-      {/* Role stats — click to expand permissions */}
-      <div style={{ display: 'flex', gap: 12, marginBottom: 24, flexWrap: 'wrap' }}>
+      {/* Role stats — click a role to FILTER the table to those users (and view its permissions) */}
+      <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
         {ROLES.map(role => {
           const r = ROLE_LABELS[role];
           const count = users.filter(u => u.role === role).length;
+          const active = filterRole === role;
           return (
-            <div key={role} onClick={() => setExpandedRole(expandedRole === role ? null : role)}
-              style={{ background: 'var(--bg-card)', border: `1px solid ${expandedRole === role ? r.color : 'var(--border)'}`, borderRadius: 10, padding: '14px 18px', cursor: 'pointer', minWidth: 120, flex: 1, transition: 'border-color 0.15s' }}>
+            <div key={role}
+              onClick={() => { const next = active ? '' : role; setFilterRole(next); setExpandedRole(next ? role : null); }}
+              title={`Show ${r.label} users`}
+              style={{ background: active ? `${r.color}12` : 'var(--bg-surface)', border: `1px solid ${active ? r.color : 'var(--border)'}`, boxShadow: 'var(--shadow-sm)', borderRadius: 10, padding: '14px 18px', cursor: 'pointer', minWidth: 120, flex: 1, transition: 'border-color 0.15s, background 0.15s' }}>
               <div style={{ fontSize: 10, fontFamily: 'var(--font-mono)', letterSpacing: 1, textTransform: 'uppercase', color: r.color, marginBottom: 6 }}>{r.label}</div>
               <div style={{ fontSize: 26, fontWeight: 700, fontFamily: 'var(--font-mono)', color: r.color }}>{count}</div>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>Click to view permissions</div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>{active ? 'Filtering ✓' : 'Click to filter'}</div>
             </div>
           );
         })}
       </div>
+
+      {/* Active filter chip */}
+      {filterRole && (
+        <div className="filter-bar">
+          <span className="filter-chip">
+            <span className="filter-chip-dot" />
+            <span>Showing: <strong>{ROLE_LABELS[filterRole]?.label}</strong> · {filtered.length} user{filtered.length === 1 ? '' : 's'}</span>
+            <button className="filter-chip-x" onClick={() => { setFilterRole(''); setExpandedRole(null); }} title="Clear filter" style={{ border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>×</button>
+          </span>
+          <button className="btn btn-ghost btn-sm" onClick={() => { setFilterRole(''); setExpandedRole(null); }}>Clear filter</button>
+        </div>
+      )}
 
       {/* Expanded permissions */}
       {expandedRole && (
@@ -261,7 +276,7 @@ export default function UsersPage() {
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
-              <tr style={{ background: 'var(--bg-secondary)' }}>
+              <tr style={{ background: 'var(--bg-subtle)' }}>
                 {['User', 'Email', 'Role', 'Auth', 'Status', 'Last Login', 'Actions'].map(h => (
                   <th key={h} style={{ padding: '12px 16px', color: 'var(--text-muted)', fontWeight: 500, fontSize: 11, textAlign: 'left', borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap', textTransform: 'uppercase', letterSpacing: 0.8 }}>{h}</th>
                 ))}
@@ -272,7 +287,7 @@ export default function UsersPage() {
                 <tr><td colSpan={7} style={{ padding: '32px', textAlign: 'center', color: 'var(--text-muted)' }}>No users found</td></tr>
               ) : filtered.map(user => (
                 <tr key={user.id} style={{ borderBottom: '1px solid var(--border)' }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-card-hover)'}
+                  onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
                   onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                   <td style={{ padding: '12px 16px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>

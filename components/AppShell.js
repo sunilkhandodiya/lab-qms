@@ -1,6 +1,7 @@
 'use client';
 // components/AppShell.js — app frame with a collapsible sidebar (state persisted in localStorage)
 import { useState, useEffect } from 'react';
+import ThemeToggle from '@/components/ThemeToggle';
 
 const KEY = 'qms_sidebar_collapsed';
 
@@ -47,7 +48,10 @@ export default function AppShell({ sidebar, locationSwitcher, userMenu, children
             </button>
             {locationSwitcher}
           </div>
-          <div className="topbar-right">{userMenu}</div>
+          <div className="topbar-right">
+            <ThemeToggle />
+            {userMenu}
+          </div>
         </header>
         <main className="main-content">{children}</main>
       </div>
