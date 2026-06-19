@@ -230,6 +230,9 @@ button { font-family: inherit; }
   overflow: hidden;
 }
 .stat-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent-blue); }
+a.stat-card { display: block; transition: box-shadow 0.15s, transform 0.15s; }
+a.stat-card:hover { box-shadow: var(--shadow); transform: translateY(-2px); }
+tbody tr[title]:hover td { background: var(--accent-blue-soft); }
 .stat-accent-blue::before { background: var(--accent-blue); }
 .stat-accent-teal::before { background: var(--accent-teal); }
 .stat-accent-amber::before { background: var(--accent-amber); }

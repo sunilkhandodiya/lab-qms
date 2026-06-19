@@ -1,7 +1,10 @@
 // app/page.js — Quality Systems Management Dashboard (multi-centre overview)
+import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import { locationWhere } from '@/lib/location';
 import { format, addDays, isBefore } from 'date-fns';
+import LinkRow from '@/components/LinkRow';
+import CentreCard from '@/components/CentreCard';
 
 function Badge({ value }) {
   if (value == null) return <span className="badge badge-na">—</span>;
@@ -121,33 +124,33 @@ export default async function Dashboard() {
         </div>
       )}
 
-      {/* Summary stat cards */}
+      {/* Summary stat cards — each links to the relevant module */}
       <div className="grid-5 section">
-        <div className="stat-card stat-accent-blue">
+        <Link href="/capa" className="stat-card stat-accent-blue" style={{ textDecoration: 'none', color: 'inherit' }}>
           <div className="stat-label">Open CAPAs</div>
           <div className="stat-value">{openCapas}</div>
-          <div className="stat-sub">{criticalOpenCapas} critical</div>
-        </div>
-        <div className="stat-card stat-accent-amber">
+          <div className="stat-sub">{criticalOpenCapas} critical →</div>
+        </Link>
+        <Link href="/equipment" className="stat-card stat-accent-amber" style={{ textDecoration: 'none', color: 'inherit' }}>
           <div className="stat-label">Calibration Due ≤30d</div>
           <div className="stat-value">{calibDue}</div>
-          <div className="stat-sub">{calibOverdue} overdue</div>
-        </div>
-        <div className="stat-card stat-accent-red">
+          <div className="stat-sub">{calibOverdue} overdue →</div>
+        </Link>
+        <Link href="/calibration/iqc" className="stat-card stat-accent-red" style={{ textDecoration: 'none', color: 'inherit' }}>
           <div className="stat-label">QC Rejects (recent)</div>
           <div className="stat-value">{qcRejects}</div>
-          <div className="stat-sub">last 30 results</div>
-        </div>
-        <div className="stat-card stat-accent-purple">
+          <div className="stat-sub">last 30 results →</div>
+        </Link>
+        <Link href="/calibration/eqas" className="stat-card stat-accent-purple" style={{ textDecoration: 'none', color: 'inherit' }}>
           <div className="stat-label">EQAS Flags</div>
           <div className="stat-value">{eqasFlags}</div>
-          <div className="stat-sub">borderline / unacceptable</div>
-        </div>
-        <div className="stat-card stat-accent-teal">
+          <div className="stat-sub">borderline / unacceptable →</div>
+        </Link>
+        <Link href="/training" className="stat-card stat-accent-teal" style={{ textDecoration: 'none', color: 'inherit' }}>
           <div className="stat-label">Overdue Training</div>
           <div className="stat-value">{overdueTraining}</div>
-          <div className="stat-sub">assignments overdue</div>
-        </div>
+          <div className="stat-sub">assignments overdue →</div>
+        </Link>
       </div>
 
       {/* Centres section */}
@@ -164,42 +167,15 @@ export default async function Dashboard() {
           </div>
         ) : (
           <div className="grid-4">
-            {centres.map(loc => {
-              const qc = qcByLoc[loc.id] || { pass: 0, total: 0, reject: 0 };
-              const calib = calibByLoc[loc.id] || 0;
-              return (
-                <div key={loc.id} className="loc-card">
-                  <div className="loc-card-head">
-                    <div>
-                      <div className="loc-card-name">{loc.name}</div>
-                      <div className="loc-switch-state">{loc.state?.name ?? '—'}</div>
-                    </div>
-                  </div>
-                  <div className="loc-card-body">
-                    <div>
-                      <div className="loc-metric-label">Control pass</div>
-                      <div className="loc-metric-value">{qc.pass}/{qc.total}</div>
-                    </div>
-                    <div>
-                      <div className="loc-metric-label">Not pass</div>
-                      <div className="loc-metric-value" style={{ color: qc.reject > 0 ? 'var(--reject)' : undefined }}>
-                        {qc.reject}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="loc-metric-label">Calibration due</div>
-                      <div className="loc-metric-value" style={{ color: calib > 0 ? 'var(--warning)' : undefined }}>
-                        {calib}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="loc-card-foot">
-                    <span>{loc.state?.name ?? '—'}</span>
-                    <span>Updated {format(now, 'd MMM yyyy')}</span>
-                  </div>
-                </div>
-              );
-            })}
+            {centres.map(loc => (
+              <CentreCard
+                key={loc.id}
+                loc={{ id: loc.id, name: loc.name, stateName: loc.state?.name ?? null }}
+                qc={qcByLoc[loc.id] || { pass: 0, total: 0, reject: 0 }}
+                calib={calibByLoc[loc.id] || 0}
+                updated={format(now, 'd MMM yyyy')}
+              />
+            ))}
           </div>
         )}
       </div>
@@ -221,12 +197,12 @@ export default async function Dashboard() {
                 </thead>
                 <tbody>
                   {openCapaList.map(c => (
-                    <tr key={c.id}>
+                    <LinkRow key={c.id} href="/capa" title={`Open ${c.capaNumber}`}>
                       <td className="mono" style={{ fontSize: 12 }}>{c.capaNumber}</td>
                       <td style={{ fontWeight: 500, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.title}</td>
                       <td><span className={`priority-${c.priority.toLowerCase()}`}>{c.priority}</span></td>
                       <td><Badge value={c.status} /></td>
-                    </tr>
+                    </LinkRow>
                   ))}
                 </tbody>
               </table>
@@ -251,7 +227,7 @@ export default async function Dashboard() {
                   {recentEqas.map(r => {
                     const score = r.sdi ?? r.zScore;
                     return (
-                      <tr key={r.id}>
+                      <LinkRow key={r.id} href="/calibration/eqas" title="Open EQAS">
                         <td className="text-secondary" style={{ fontSize: 12 }}>{r.cycle?.scheme?.name ?? '—'}</td>
                         <td className="mono text-muted" style={{ fontSize: 11 }}>{r.cycle?.cycleRef ?? '—'}</td>
                         <td style={{ fontWeight: 500 }}>{r.analyte}</td>
@@ -260,7 +236,7 @@ export default async function Dashboard() {
                           {score != null ? <span className={scoreClass(score)}>{score.toFixed(2)}</span> : '—'}
                         </td>
                         <td><Badge value={r.grade} /></td>
-                      </tr>
+                      </LinkRow>
                     );
                   })}
                 </tbody>
