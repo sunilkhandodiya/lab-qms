@@ -5,6 +5,8 @@ import { locationWhere } from '@/lib/location';
 import { format, addDays, isBefore } from 'date-fns';
 import LinkRow from '@/components/LinkRow';
 import CentreCard from '@/components/CentreCard';
+import WarningManager from '@/components/WarningManager';
+import { getDashboardWarnings } from '@/lib/warnings';
 
 function Badge({ value }) {
   if (value == null) return <span className="badge badge-na">—</span>;
@@ -21,40 +23,19 @@ function scoreClass(n) {
 
 export default async function Dashboard() {
   const where = await locationWhere();
-  const scoped = Object.keys(where).length > 0;
   const now = new Date();
   const in30 = addDays(now, 30);
 
-  // QC results filter: QCResult → level → analyte → locationId
-  const qcResultWhere = scoped ? { level: { analyte: { is: where } } } : undefined;
-
   const [
-    openCapas,
-    criticalOpenCapas,
-    equipment,
-    qcRecent,
-    eqasFlags,
-    overdueTraining,
+    warnings,
     locations,
     qcAll,
     equipAll,
     openCapaList,
     recentEqas,
   ] = await Promise.all([
-    // CAPA has no locationId — counted globally
-    prisma.capa.count({ where: { status: { not: 'CLOSED' } } }),
-    prisma.capa.count({ where: { status: { not: 'CLOSED' }, priority: 'CRITICAL' } }),
-    // Equipment respects active centre
-    prisma.equipment.findMany({ where, select: { locationId: true, calibrationDue: true } }),
-    // Recent 30 QC results respecting active centre
-    prisma.qCResult.findMany({
-      where: qcResultWhere,
-      orderBy: { measuredAt: 'desc' },
-      take: 30,
-      select: { status: true },
-    }),
-    prisma.eQASResult.count({ where: { grade: { in: ['BORDERLINE', 'UNACCEPTABLE'] } } }),
-    prisma.training.count({ where: { status: 'OVERDUE' } }),
+    // Dashboard warning counts, with acknowledged records already removed
+    getDashboardWarnings(where),
     // All centres for the Centres section
     prisma.location.findMany({ include: { state: true }, orderBy: { name: 'asc' } }),
     // All QC results (with analyte location) — aggregated per centre in JS
@@ -71,10 +52,18 @@ export default async function Dashboard() {
     }),
   ]);
 
-  // Summary derived values (active centre scope)
-  const qcRejects = qcRecent.filter(r => r.status === 'REJECT').length;
-  const calibDue = equipment.filter(e => e.calibrationDue && isBefore(new Date(e.calibrationDue), in30)).length;
-  const calibOverdue = equipment.filter(e => e.calibrationDue && isBefore(new Date(e.calibrationDue), now)).length;
+  // Summary values (active-centre scope; acknowledged warnings excluded)
+  const { openCapas, criticalOpenCapas, calibDue, calibOverdue, qcRejects, eqasFlags, overdueTraining } = warnings;
+
+  // Categories surfaced in the "Manage warnings" control (Admin / Dr. Pathology)
+  const warningCats = [
+    { key: 'calib_overdue', label: 'Overdue calibration', count: calibOverdue },
+    { key: 'calib_due', label: 'Calibration due ≤30d', count: calibDue },
+    { key: 'qc_reject', label: 'QC rejects (recent)', count: qcRejects },
+    { key: 'eqas_flag', label: 'EQAS flags', count: eqasFlags },
+    { key: 'training_overdue', label: 'Overdue training', count: overdueTraining },
+    { key: 'capa_open', label: 'Open CAPAs', count: openCapas },
+  ];
 
   // Per-centre QC aggregation (via analyte.locationId)
   const qcByLoc = {};
@@ -110,6 +99,7 @@ export default async function Dashboard() {
           <div className="page-title">Quality Dashboard</div>
           <div className="page-subtitle">{format(now, 'EEEE, d MMMM yyyy')}</div>
         </div>
+        <WarningManager categories={warningCats} />
       </div>
 
       {/* Alert banners — click to open the affected records */}

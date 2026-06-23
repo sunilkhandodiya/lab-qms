@@ -26,6 +26,8 @@ export default async function AuditPage() {
     EQUIPMENT_ADDED: '#3b82f6',
     TRAINING_SIGNED_OFF: '#22c55e',
     REVIEW_UPDATED: '#7c3aed',
+    WARNING_ACK: '#0d9488',
+    WARNING_UNACK: '#d97706',
   };
 
   return (
