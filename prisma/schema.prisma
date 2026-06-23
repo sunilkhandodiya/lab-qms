@@ -727,6 +727,25 @@ model AuditLog {
   capa        Capa?      @relation(fields: [capaId], references: [id])
 }
 
+// ─── Dashboard warning acknowledgements ───────────────────────────────────────
+// Admin / Dr. Pathology can acknowledge a flagged record so it drops off the
+// dashboard warnings. Every ack / un-ack is appended to AuditLog (immutable).
+model WarningAck {
+  id         String   @id @default(cuid())
+  entity     String   // Equipment | QCResult | EQASResult | Training | Capa
+  entityId   String
+  category   String   // calib_overdue | calib_due | qc_reject | eqas_flag | training_overdue | capa_open
+  context    String?  // snapshot that re-flags the record if it changes (e.g. Equipment.calibrationDue)
+  note       String?
+  active     Boolean  @default(true)
+  ackedBy    String?
+  ackedById  String?
+  ackedAt    DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([entity, entityId])
+}
+
 model UserActivity {
   id          String     @id @default(cuid())
   userId      String
