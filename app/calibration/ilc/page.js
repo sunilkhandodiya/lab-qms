@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { locationWhere } from '@/lib/location';
 import { format } from 'date-fns';
 import GatedForm from '../GatedForm';
+import ReviewControl from '@/components/ReviewControl';
 
 function YesNo({ value }) {
   return value
@@ -56,7 +57,7 @@ export default async function IlcPage() {
               <thead>
                 <tr>
                   <th>Date</th><th>Test</th><th>Analyte</th><th>Our Result</th>
-                  <th>Reference Lab Result</th><th>Diff %</th><th>Acceptable</th><th>Comment</th>
+                  <th>Reference Lab Result</th><th>Diff %</th><th>Acceptable</th><th>Comment</th><th>Review</th>
                 </tr>
               </thead>
               <tbody>
@@ -70,6 +71,7 @@ export default async function IlcPage() {
                     <td className="mono">{num(r.diffPercent, '%')}</td>
                     <td><YesNo value={r.acceptable} /></td>
                     <td className="text-secondary" style={{ fontSize: 12, maxWidth: 240 }}>{r.comment || '—'}</td>
+                    <td><ReviewControl type="ilc" id={r.id} status={r.reviewStatus} reviewedAt={r.reviewedAt} reviewedBy={r.reviewedBy} reviewNote={r.reviewNote} /></td>
                   </tr>
                 ))}
               </tbody>

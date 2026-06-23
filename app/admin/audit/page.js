@@ -25,6 +25,7 @@ export default async function AuditPage() {
     EQAS_RESULT_SUBMITTED: '#a855f7',
     EQUIPMENT_ADDED: '#3b82f6',
     TRAINING_SIGNED_OFF: '#22c55e',
+    REVIEW_UPDATED: '#7c3aed',
   };
 
   return (

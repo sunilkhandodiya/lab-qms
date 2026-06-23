@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { locationWhere } from '@/lib/location';
 import { format } from 'date-fns';
 import GatedForm from '../GatedForm';
+import ReviewControl from '@/components/ReviewControl';
 
 function YesNo({ value }) {
   return value
@@ -58,7 +59,7 @@ export default async function LisPage() {
                 <tr>
                   <th>Date</th><th>Barcode</th><th>Parameter</th><th>Equipment Result</th>
                   <th>Transferred To</th><th>Transferred Result</th><th>Diff %</th>
-                  <th>Acceptable</th><th>Recorded By</th>
+                  <th>Acceptable</th><th>Recorded By</th><th>Review</th>
                 </tr>
               </thead>
               <tbody>
@@ -73,6 +74,7 @@ export default async function LisPage() {
                     <td className="mono">{num(r.diffPercent, '%')}</td>
                     <td><YesNo value={r.acceptable} /></td>
                     <td className="text-secondary">{r.recordedBy || '—'}</td>
+                    <td><ReviewControl type="lis" id={r.id} status={r.reviewStatus} reviewedAt={r.reviewedAt} reviewedBy={r.reviewedBy} reviewNote={r.reviewNote} /></td>
                   </tr>
                 ))}
               </tbody>
