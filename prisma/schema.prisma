@@ -276,6 +276,14 @@ model Maintenance {
 
 // ─── Control & Calibration: lot verification, LIS, ILC, IPV, CV% ──────────────
 
+// Pathologist / Admin review state applied to otherwise read-only calibration records.
+// Every change is appended to AuditLog (immutable); these fields hold only the latest state.
+enum ReviewStatus {
+  PENDING
+  REVIEWED
+  REJECTED
+}
+
 model CalibrationVerification {
   id              String    @id @default(cuid())
   locationId      String?
@@ -308,6 +316,10 @@ model QcLotVerification {
   instrument      String?
   date            DateTime  @default(now())
   qcName          String
+  reviewStatus    ReviewStatus @default(PENDING)
+  reviewedAt      DateTime?
+  reviewedBy      String?
+  reviewNote      String?
   oldLot          String?
   oldExpiry       DateTime?
   newLot          String?
@@ -329,6 +341,10 @@ model LisVerification {
   location        Location? @relation(fields: [locationId], references: [id])
   date            DateTime  @default(now())
   barcode         String?
+  reviewStatus    ReviewStatus @default(PENDING)
+  reviewedAt      DateTime?
+  reviewedBy      String?
+  reviewNote      String?
   parameter       String
   equipmentResult Float?
   transferredTo   String?
@@ -345,6 +361,10 @@ model Ilc {
   location      Location? @relation(fields: [locationId], references: [id])
   date          DateTime  @default(now())
   sampleDetails String?
+  reviewStatus  ReviewStatus @default(PENDING)
+  reviewedAt    DateTime?
+  reviewedBy    String?
+  reviewNote    String?
   testName      String?
   analyte       String
   ourResult     Float?
@@ -362,6 +382,10 @@ model InterPersonnelValidation {
   date           DateTime  @default(now())
   department     String?
   machineA       String?
+  reviewStatus   ReviewStatus @default(PENDING)
+  reviewedAt     DateTime?
+  reviewedBy     String?
+  reviewNote     String?
   machineB       String?
   parameter      String
   resultA        Float?

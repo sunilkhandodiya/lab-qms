@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { locationWhere } from '@/lib/location';
 import { format } from 'date-fns';
 import GatedForm from '../GatedForm';
+import ReviewControl from '@/components/ReviewControl';
 
 function YesNo({ value }) {
   return value
@@ -58,7 +59,7 @@ export default async function IpvPage() {
               <thead>
                 <tr>
                   <th>Date</th><th>Department</th><th>Machine A</th><th>Machine B</th>
-                  <th>Parameter</th><th>Result A</th><th>Result B</th><th>Diff %</th><th>Acceptable</th>
+                  <th>Parameter</th><th>Result A</th><th>Result B</th><th>Diff %</th><th>Acceptable</th><th>Review</th>
                 </tr>
               </thead>
               <tbody>
@@ -73,6 +74,7 @@ export default async function IpvPage() {
                     <td className="mono">{num(r.resultB)}</td>
                     <td className="mono">{num(r.diffPercent, '%')}</td>
                     <td><YesNo value={r.acceptable} /></td>
+                    <td><ReviewControl type="ipv" id={r.id} status={r.reviewStatus} reviewedAt={r.reviewedAt} reviewedBy={r.reviewedBy} reviewNote={r.reviewNote} /></td>
                   </tr>
                 ))}
               </tbody>

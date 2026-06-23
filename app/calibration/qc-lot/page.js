@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { locationWhere } from '@/lib/location';
 import { format } from 'date-fns';
 import GatedForm from '../GatedForm';
+import ReviewControl from '@/components/ReviewControl';
 
 function YesNo({ value }) {
   return value
@@ -63,7 +64,7 @@ export default async function QcLotPage() {
                   <th>Date</th><th>QC Name</th><th>Department</th><th>Instrument</th>
                   <th>Old Lot</th><th>New Lot</th><th>Value (Old)</th><th>Value (New)</th>
                   <th>Difference</th><th>Acceptable Limit</th><th>Acceptable</th>
-                  <th>Technician</th><th>Supervisor</th>
+                  <th>Technician</th><th>Supervisor</th><th>Review</th>
                 </tr>
               </thead>
               <tbody>
@@ -82,6 +83,7 @@ export default async function QcLotPage() {
                     <td><YesNo value={r.acceptable} /></td>
                     <td className="text-secondary">{r.technicianBy || '—'}</td>
                     <td className="text-secondary">{r.supervisorBy || '—'}</td>
+                    <td><ReviewControl type="qclot" id={r.id} status={r.reviewStatus} reviewedAt={r.reviewedAt} reviewedBy={r.reviewedBy} reviewNote={r.reviewNote} /></td>
                   </tr>
                 ))}
               </tbody>
