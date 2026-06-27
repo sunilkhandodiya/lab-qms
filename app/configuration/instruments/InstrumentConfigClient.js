@@ -3,10 +3,10 @@
 import { useState, useMemo } from 'react';
 import { CanDo } from '@/components/RoleGuard';
 
-const EMPTY = { name: '', manufacturer: '', group: '', model: '', lisMachineId: '', locationId: '' };
+const EMPTY = { name: '', manufacturer: '', group: '', model: '', lisMachineId: '', machineConfigId: '', locationId: '' };
 
-function Modal({ title, initial, locations, onSave, onClose }) {
-  const [form, setForm] = useState(initial || EMPTY);
+function Modal({ title, initial, locations, machines, onSave, onClose }) {
+  const [form, setForm] = useState(initial ? { ...initial, machineConfigId: initial.machineConfigId || '' } : EMPTY);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -51,6 +51,13 @@ function Modal({ title, initial, locations, onSave, onClose }) {
             </div>
           </div>
           <div className="form-group">
+            <label className="form-label">Machine (Parent)</label>
+            <select className="form-select" value={form.machineConfigId || ''} onChange={e => set('machineConfigId', e.target.value)}>
+              <option value="">No machine linked</option>
+              {machines.map(m => <option key={m.id} value={m.id}>{m.machineName} ({m.machineCode})</option>)}
+            </select>
+          </div>
+          <div className="form-group">
             <label className="form-label">Location</label>
             <select className="form-select" value={form.locationId} onChange={e => set('locationId', e.target.value)}>
               <option value="">All locations</option>
@@ -67,7 +74,7 @@ function Modal({ title, initial, locations, onSave, onClose }) {
   );
 }
 
-export default function InstrumentConfigClient({ initialInstruments, locations }) {
+export default function InstrumentConfigClient({ initialInstruments, locations, machines = [] }) {
   const [records, setRecords] = useState(initialInstruments);
   const [filterLoc, setFilterLoc] = useState('');
   const [search, setSearch] = useState('');
@@ -103,8 +110,8 @@ export default function InstrumentConfigClient({ initialInstruments, locations }
   }
 
   function exportCSV() {
-    const headers = ['Sr No', 'Instrument Name', 'Manufacturer', 'Group', 'Model', 'Location', 'LIS Machine ID'];
-    const rows = filtered.map((r, i) => [i + 1, r.name, r.manufacturer || '', r.group || '', r.model || '', r.location?.name || '', r.lisMachineId || '']);
+    const headers = ['Sr No', 'Instrument Name', 'Machine', 'Manufacturer', 'Group', 'Model', 'Location', 'LIS Machine ID'];
+    const rows = filtered.map((r, i) => [i + 1, r.name, r.machineConfig ? `${r.machineConfig.machineName} (${r.machineConfig.machineCode})` : '', r.manufacturer || '', r.group || '', r.model || '', r.location?.name || '', r.lisMachineId || '']);
     const csv = [headers, ...rows].map(row => row.map(v => `"${v}"`).join(',')).join('\n');
     const a = document.createElement('a'); a.href = 'data:text/csv,' + encodeURIComponent(csv); a.download = 'instruments.csv'; a.click();
   }
@@ -147,18 +154,26 @@ export default function InstrumentConfigClient({ initialInstruments, locations }
           <table>
             <thead>
               <tr>
-                {['Sr No', 'Instrument Name', 'Manufacturer', 'Group', 'Model', 'Location', 'LIS Machine ID', ''].map((h, i) => (
+                {['Sr No', 'Instrument Name', 'Machine', 'Manufacturer', 'Group', 'Model', 'Location', 'LIS Machine ID', ''].map((h, i) => (
                   <th key={i}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 ? (
-                <tr><td colSpan={8} style={{ padding: 32, textAlign: 'center', color: 'var(--text-muted)' }}>No instruments configured.</td></tr>
+                <tr><td colSpan={9} style={{ padding: 32, textAlign: 'center', color: 'var(--text-muted)' }}>No instruments configured.</td></tr>
               ) : filtered.map((r, i) => (
                 <tr key={r.id}>
                   <td style={{ color: 'var(--text-muted)', width: 60 }}>{i + 1}</td>
                   <td style={{ fontWeight: 500 }}>{r.name}</td>
+                  <td>
+                    {r.machineConfig
+                      ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 20, padding: '2px 10px', fontSize: 12 }}>
+                          <span style={{ fontWeight: 600 }}>{r.machineConfig.machineName}</span>
+                          <span style={{ color: 'var(--text-muted)', fontSize: 11 }}>({r.machineConfig.machineCode})</span>
+                        </span>
+                      : <span className="text-muted">—</span>}
+                  </td>
                   <td>{r.manufacturer || <span className="text-muted">—</span>}</td>
                   <td>{r.group || <span className="text-muted">—</span>}</td>
                   <td>{r.model || <span className="text-muted">—</span>}</td>
@@ -188,8 +203,8 @@ export default function InstrumentConfigClient({ initialInstruments, locations }
         </div>
       </div>
 
-      {showAdd && <Modal title="＋ Add Instrument" locations={locations} onSave={handleAdd} onClose={() => setShowAdd(false)} />}
-      {editing && <Modal title="Edit Instrument" initial={editing} locations={locations} onSave={handleEdit} onClose={() => setEditing(null)} />}
+      {showAdd && <Modal title="＋ Add Instrument" locations={locations} machines={machines} onSave={handleAdd} onClose={() => setShowAdd(false)} />}
+      {editing && <Modal title="Edit Instrument" initial={editing} locations={locations} machines={machines} onSave={handleEdit} onClose={() => setEditing(null)} />}
     </div>
   );
 }

@@ -8,7 +8,7 @@ export async function GET(request) {
 
   const records = await prisma.instrumentConfig.findMany({
     where: locationId ? { locationId } : {},
-    include: { location: true },
+    include: { location: true, machineConfig: true },
     orderBy: { name: 'asc' },
   });
   return NextResponse.json(records);
@@ -16,7 +16,7 @@ export async function GET(request) {
 
 export async function POST(request) {
   const body = await request.json();
-  const { name, manufacturer, group, model, lisMachineId, locationId } = body;
+  const { name, manufacturer, group, model, lisMachineId, machineConfigId, locationId } = body;
 
   if (!name?.trim()) return NextResponse.json({ error: 'Instrument name is required.' }, { status: 400 });
 
@@ -27,9 +27,10 @@ export async function POST(request) {
       group: group?.trim() || null,
       model: model?.trim() || null,
       lisMachineId: lisMachineId?.trim() || null,
+      machineConfigId: machineConfigId || null,
       locationId: locationId || null,
     },
-    include: { location: true },
+    include: { location: true, machineConfig: true },
   });
 
   await prisma.auditLog.create({

@@ -19,6 +19,7 @@ const NAV = [
   {
     group: true, icon: '◈', label: 'Configuration', page: 'configuration',
     children: [
+      { href: '/configuration/machines',     label: 'Machine List' },
       { href: '/configuration/instruments',  label: 'Instrument' },
       { href: '/configuration/assay',        label: 'Assay' },
       { href: '/configuration/qc-tests',     label: 'Master QC Test' },
