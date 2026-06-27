@@ -27,7 +27,19 @@
       "Bash(echo \"exit: $?\")",
       "Bash(git rm *)",
       "Bash(git commit *)",
-      "Bash(xargs -I{} du -k \"{}\")"
+      "Bash(xargs -I{} du -k \"{}\")",
+      "Bash(node_modules/.bin/prisma db *)",
+      "Bash(./node_modules/.bin/prisma db *)",
+      "Bash(npm install *)",
+      "Bash(docker exec *)",
+      "Bash(DATABASE_URL=\"postgresql://admin:secret@localhost:5432/qms\" npm run *)",
+      "Bash(DATABASE_URL=postgresql://admin:secret@localhost:5432/qms node -e ' *)",
+      "Bash(DATABASE_URL=\"postgresql://admin:secret@localhost:5432/qms\" node_modules/.bin/next build --no-lint)",
+      "Bash(git -C /Users/sunil.kumar/Documents/lab/lab-qms status)",
+      "Bash(git -C /Users/sunil.kumar/Documents/lab/lab-qms log --oneline -3)",
+      "Bash(git *)",
+      "Bash(xargs ls -la)",
+      "Bash(openssl rand *)"
     ]
   }
 }
