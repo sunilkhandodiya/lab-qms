@@ -113,6 +113,8 @@ model Location {
   riskAssessments RiskAssessment[]
   qualityRecords  QualityRecord[]
   eqasSchemes     EQASScheme[]
+  instrumentConfigs InstrumentConfig[]
+  assayConfigs      AssayConfig[]
 
   @@unique([name, stateId])
 }
@@ -759,4 +761,33 @@ model UserActivity {
   equipment   Equipment? @relation(fields: [equipmentId], references: [id])
   capaId      String?
   capa        Capa?      @relation(fields: [capaId], references: [id])
+}
+
+// ─── Configuration screens ─────────────────────────────────────────────────────
+
+model InstrumentConfig {
+  id           String    @id @default(cuid())
+  name         String
+  manufacturer String?
+  group        String?
+  model        String?
+  lisMachineId String?
+  locationId   String?
+  location     Location? @relation(fields: [locationId], references: [id])
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model AssayConfig {
+  id              String    @id @default(cuid())
+  analyte         String
+  department      String?
+  method          String?
+  unit            String?
+  reagentSupplier String?
+  temperature     Float?
+  locationId      String?
+  location        Location? @relation(fields: [locationId], references: [id])
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 }

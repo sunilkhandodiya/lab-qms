@@ -4,6 +4,7 @@ import { locationWhere } from '@/lib/location';
 import { format } from 'date-fns';
 import { evaluateWestgard } from '@/lib/westgard';
 import FilterBar from '@/components/FilterBar';
+import AddAnalyteButton from './AddAnalyteModal';
 
 function Badge({ value }) {
   return (
@@ -92,7 +93,11 @@ export default async function IqcPage({ searchParams }) {
   const sp = (await searchParams) || {};
   const filterReject = sp.filter === 'reject';
 
-  const where = await locationWhere();
+  const [locations, where] = await Promise.all([
+    prisma.location.findMany({ orderBy: { name: 'asc' } }),
+    locationWhere(),
+  ]);
+
   const analytes = await prisma.qCAnalyte.findMany({
     where,
     include: {
@@ -111,6 +116,7 @@ export default async function IqcPage({ searchParams }) {
     <div>
       <div className="section-header">
         <div className="section-title">Internal QC — Levey-Jennings</div>
+        <AddAnalyteButton locations={locations} />
       </div>
 
       {filterReject && <FilterBar label="QC rejects" count={rejectCount} clearHref="/calibration/iqc" />}
