@@ -101,7 +101,10 @@ function TestModal({ title, initial, master, onSave, onClose }) {
             </div>
             <div className="form-group">
               <label className="form-label">Method</label>
-              <input className="form-input" value={form.method} onChange={e => set('method', e.target.value)} placeholder="e.g. Calculated" />
+              <select className="form-select" value={form.method} onChange={e => set('method', e.target.value)}>
+                <option value="">Select method</option>
+                {master.methods.map(m => <option key={m.id} value={m.name}>{m.name}</option>)}
+              </select>
             </div>
             <div className="form-group">
               <label className="form-label">Unit</label>

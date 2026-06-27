@@ -118,7 +118,10 @@ function AddQCTestModal({ master, onMasterUpdate, onClose, onSaved }) {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
             <div>
               <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4 }}>Method</label>
-              <input className="form-input" value={form.method} onChange={e => set('method', e.target.value)} placeholder="e.g. Calculated" />
+              <select className="form-select" value={form.method} onChange={e => set('method', e.target.value)} style={{ color: form.method ? 'var(--text-primary)' : 'var(--text-muted)' }}>
+                <option value="">Select method</option>
+                {master.methods.map(m => <option key={m.id} value={m.name}>{m.name}</option>)}
+              </select>
             </div>
             <div>
               <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4 }}>Unit</label>

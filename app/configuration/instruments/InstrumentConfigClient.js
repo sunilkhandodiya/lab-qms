@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import { CanDo } from '@/components/RoleGuard';
 
-const EMPTY = { name: '', manufacturer: '', group: '', model: '', lisMachineId: '', machineConfigId: '', locationId: '' };
+const EMPTY = { name: '', manufacturer: '', group: '', model: '', machineConfigId: '', locationId: '' };
 
 function Modal({ title, initial, locations, machines, onSave, onClose }) {
   const [form, setForm] = useState(initial ? { ...initial, machineConfigId: initial.machineConfigId || '' } : EMPTY);
@@ -44,10 +44,6 @@ function Modal({ title, initial, locations, machines, onSave, onClose }) {
             <div className="form-group">
               <label className="form-label">Model</label>
               <input className="form-input" value={form.model} onChange={e => set('model', e.target.value)} placeholder="e.g. 5800" />
-            </div>
-            <div className="form-group">
-              <label className="form-label">LIS Machine ID</label>
-              <input className="form-input" value={form.lisMachineId} onChange={e => set('lisMachineId', e.target.value)} placeholder="e.g. INST-001" />
             </div>
           </div>
           <div className="form-group">
@@ -110,8 +106,8 @@ export default function InstrumentConfigClient({ initialInstruments, locations, 
   }
 
   function exportCSV() {
-    const headers = ['Sr No', 'Instrument Name', 'Machine', 'Manufacturer', 'Group', 'Model', 'Location', 'LIS Machine ID'];
-    const rows = filtered.map((r, i) => [i + 1, r.name, r.machineConfig ? `${r.machineConfig.machineName} (${r.machineConfig.machineCode})` : '', r.manufacturer || '', r.group || '', r.model || '', r.location?.name || '', r.lisMachineId || '']);
+    const headers = ['Sr No', 'Instrument Name', 'Machine', 'Manufacturer', 'Group', 'Model', 'Location'];
+    const rows = filtered.map((r, i) => [i + 1, r.name, r.machineConfig ? `${r.machineConfig.machineName} (${r.machineConfig.machineCode})` : '', r.manufacturer || '', r.group || '', r.model || '', r.location?.name || '']);
     const csv = [headers, ...rows].map(row => row.map(v => `"${v}"`).join(',')).join('\n');
     const a = document.createElement('a'); a.href = 'data:text/csv,' + encodeURIComponent(csv); a.download = 'instruments.csv'; a.click();
   }
@@ -154,14 +150,14 @@ export default function InstrumentConfigClient({ initialInstruments, locations, 
           <table>
             <thead>
               <tr>
-                {['Sr No', 'Instrument Name', 'Machine', 'Manufacturer', 'Group', 'Model', 'Location', 'LIS Machine ID', ''].map((h, i) => (
+                {['Sr No', 'Instrument Name', 'Machine', 'Manufacturer', 'Group', 'Model', 'Location', ''].map((h, i) => (
                   <th key={i}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 ? (
-                <tr><td colSpan={9} style={{ padding: 32, textAlign: 'center', color: 'var(--text-muted)' }}>No instruments configured.</td></tr>
+                <tr><td colSpan={8} style={{ padding: 32, textAlign: 'center', color: 'var(--text-muted)' }}>No instruments configured.</td></tr>
               ) : filtered.map((r, i) => (
                 <tr key={r.id}>
                   <td style={{ color: 'var(--text-muted)', width: 60 }}>{i + 1}</td>
@@ -182,7 +178,6 @@ export default function InstrumentConfigClient({ initialInstruments, locations, 
                       ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 20, padding: '2px 10px', fontSize: 12 }}>📍 {r.location.name}</span>
                       : <span className="text-muted">—</span>}
                   </td>
-                  <td className="mono" style={{ fontSize: 12 }}>{r.lisMachineId || 'N/A'}</td>
                   <td>
                     <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                       <CanDo permission="config:edit">

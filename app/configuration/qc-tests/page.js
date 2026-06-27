@@ -20,7 +20,8 @@ export default async function QCTestConfigPage() {
       prisma.departmentConfig.findMany({ where: { active: true }, orderBy: { name: 'asc' } }),
       prisma.instrument.findMany({ include: { location: true }, orderBy: { name: 'asc' } }),
       prisma.lot.findMany({ include: { location: true }, orderBy: { name: 'asc' } }),
-    ]).then(([locations, departments, instruments, lots]) => ({ locations, departments, instruments, lots })),
+      prisma.methodConfig.findMany({ where: { active: true }, orderBy: { name: 'asc' } }),
+    ]).then(([locations, departments, instruments, lots, methods]) => ({ locations, departments, instruments, lots, methods })),
   ]);
 
   return (

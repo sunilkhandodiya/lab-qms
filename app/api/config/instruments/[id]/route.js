@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma';
 export async function PATCH(request, { params }) {
   const { id } = await params;
   const body = await request.json();
-  const { name, manufacturer, group, model, lisMachineId, machineConfigId, locationId } = body;
+  const { name, manufacturer, group, model, machineConfigId, locationId } = body;
 
   const record = await prisma.instrumentConfig.update({
     where: { id },
@@ -14,7 +14,6 @@ export async function PATCH(request, { params }) {
       manufacturer: manufacturer?.trim() || null,
       group: group?.trim() || null,
       model: model?.trim() || null,
-      lisMachineId: lisMachineId?.trim() || null,
       ...(machineConfigId !== undefined && { machineConfigId: machineConfigId || null }),
       ...(locationId !== undefined && { locationId: locationId || null }),
     },

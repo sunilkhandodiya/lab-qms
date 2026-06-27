@@ -39,7 +39,7 @@ function LevelRow({ index, level, onChange, onRemove }) {
   );
 }
 
-function Modal({ locations, departments, onClose }) {
+function Modal({ locations, departments, methods, onClose }) {
   const router = useRouter();
   const [form, setForm] = useState({ name: '', unit: '', method: '', department: '', instrument: '', locationId: '', mean: '', sd: '', cv: '' });
   const [levels, setLevels] = useState([]);
@@ -107,7 +107,10 @@ function Modal({ locations, departments, onClose }) {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
             <div>
               <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4 }}>Method</label>
-              <input className="form-input" value={form.method} onChange={e => setF('method', e.target.value)} placeholder="e.g. Cyanmethaemoglobin" />
+              <select className="form-select" value={form.method} onChange={e => setF('method', e.target.value)} style={{ color: form.method ? 'var(--text-primary)' : 'var(--text-muted)' }}>
+                <option value="">Select method</option>
+                {methods.map(m => <option key={m.id} value={m.name}>{m.name}</option>)}
+              </select>
             </div>
             <div>
               <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4 }}>Department</label>
@@ -181,14 +184,14 @@ function Modal({ locations, departments, onClose }) {
   );
 }
 
-export default function AddAnalyteButton({ locations, departments }) {
+export default function AddAnalyteButton({ locations, departments, methods }) {
   const [open, setOpen] = useState(false);
   return (
     <>
       <CanDo permission="iqc:add_analyte">
         <button className="btn btn-primary" onClick={() => setOpen(true)}>＋ Add QC Test</button>
       </CanDo>
-      {open && <Modal locations={locations} departments={departments} onClose={() => setOpen(false)} />}
+      {open && <Modal locations={locations} departments={departments} methods={methods} onClose={() => setOpen(false)} />}
     </>
   );
 }

@@ -93,10 +93,11 @@ export default async function IqcPage({ searchParams }) {
   const sp = (await searchParams) || {};
   const filterReject = sp.filter === 'reject';
 
-  const [locations, where, departments] = await Promise.all([
+  const [locations, where, departments, methods] = await Promise.all([
     prisma.location.findMany({ orderBy: { name: 'asc' } }),
     locationWhere(),
     prisma.departmentConfig.findMany({ where: { active: true }, orderBy: { name: 'asc' } }),
+    prisma.methodConfig.findMany({ where: { active: true }, orderBy: { name: 'asc' } }),
   ]);
 
   const analytes = await prisma.qCAnalyte.findMany({
@@ -117,7 +118,7 @@ export default async function IqcPage({ searchParams }) {
     <div>
       <div className="section-header">
         <div className="section-title">Internal QC — Levey-Jennings</div>
-        <AddAnalyteButton locations={locations} departments={departments} />
+        <AddAnalyteButton locations={locations} departments={departments} methods={methods} />
       </div>
 
       {filterReject && <FilterBar label="QC rejects" count={rejectCount} clearHref="/calibration/iqc" />}

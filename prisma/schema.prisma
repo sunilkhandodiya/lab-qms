@@ -788,7 +788,6 @@ model InstrumentConfig {
   manufacturer    String?
   group           String?
   model           String?
-  lisMachineId    String?
   machineConfigId String?
   machineConfig   MachineConfig? @relation(fields: [machineConfigId], references: [id])
   locationId      String?

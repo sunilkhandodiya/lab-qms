@@ -16,7 +16,7 @@ export async function GET(request) {
 
 export async function POST(request) {
   const body = await request.json();
-  const { name, manufacturer, group, model, lisMachineId, machineConfigId, locationId } = body;
+  const { name, manufacturer, group, model, machineConfigId, locationId } = body;
 
   if (!name?.trim()) return NextResponse.json({ error: 'Instrument name is required.' }, { status: 400 });
 
@@ -26,7 +26,6 @@ export async function POST(request) {
       manufacturer: manufacturer?.trim() || null,
       group: group?.trim() || null,
       model: model?.trim() || null,
-      lisMachineId: lisMachineId?.trim() || null,
       machineConfigId: machineConfigId || null,
       locationId: locationId || null,
     },
