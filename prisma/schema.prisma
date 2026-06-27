@@ -115,6 +115,7 @@ model Location {
   eqasSchemes     EQASScheme[]
   instrumentConfigs InstrumentConfig[]
   assayConfigs      AssayConfig[]
+  lotConfigs        LotConfig[]
 
   @@unique([name, stateId])
 }
@@ -790,4 +791,17 @@ model AssayConfig {
   location        Location? @relation(fields: [locationId], references: [id])
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
+}
+
+model LotConfig {
+  id         String    @id @default(cuid())
+  lotNo      String
+  name       String
+  expiry     DateTime?
+  department String?
+  active     Boolean   @default(true)
+  locationId String?
+  location   Location? @relation(fields: [locationId], references: [id])
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 }
