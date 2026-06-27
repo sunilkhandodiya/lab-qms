@@ -34,10 +34,13 @@ function ReviewDue({ date }) {
 export default async function SopPage({ searchParams }) {
   const sp = (await searchParams) || {};
 
-  const docs = await prisma.document.findMany({
-    include: { author: true, approvals: { include: { reviewer: true } } },
-    orderBy: { docNumber: 'asc' },
-  });
+  const [docs, departments] = await Promise.all([
+    prisma.document.findMany({
+      include: { author: true, approvals: { include: { reviewer: true } } },
+      orderBy: { docNumber: 'asc' },
+    }),
+    prisma.departmentConfig.findMany({ where: { active: true }, orderBy: { name: 'asc' } }),
+  ]);
 
   // Stats — always from the FULL document list
   const total = docs.length;
@@ -85,7 +88,7 @@ export default async function SopPage({ searchParams }) {
             <div className="page-title">Standard Operating Procedure</div>
             <div className="page-subtitle">Controlled documents · SOPs · Manuals</div>
           </div>
-          <CanDo permission="documents:create"><SopForm /></CanDo>
+          <CanDo permission="documents:create"><SopForm departments={departments} /></CanDo>
         </div>
       </div>
 

@@ -5,7 +5,7 @@ import { CanDo } from '@/components/RoleGuard';
 
 const EMPTY = { analyte: '', department: '', method: '', unit: '', reagentSupplier: '', temperature: '', locationId: '' };
 
-function Modal({ title, initial, locations, onSave, onClose }) {
+function Modal({ title, initial, locations, departments, onSave, onClose }) {
   const [form, setForm] = useState(initial ? { ...initial, temperature: initial.temperature ?? '' } : EMPTY);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -35,7 +35,10 @@ function Modal({ title, initial, locations, onSave, onClose }) {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
             <div className="form-group">
               <label className="form-label">Department</label>
-              <input className="form-input" value={form.department} onChange={e => set('department', e.target.value)} placeholder="e.g. Clinical Hematology" />
+              <select className="form-select" value={form.department} onChange={e => set('department', e.target.value)}>
+                <option value="">Select department</option>
+                {departments.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
+              </select>
             </div>
             <div className="form-group">
               <label className="form-label">Method</label>
@@ -71,7 +74,7 @@ function Modal({ title, initial, locations, onSave, onClose }) {
   );
 }
 
-export default function AssayConfigClient({ initialAssays, locations }) {
+export default function AssayConfigClient({ initialAssays, locations, departments }) {
   const [records, setRecords] = useState(initialAssays);
   const [filterLoc, setFilterLoc] = useState('');
   const [search, setSearch] = useState('');
@@ -189,8 +192,8 @@ export default function AssayConfigClient({ initialAssays, locations }) {
         </div>
       </div>
 
-      {showAdd && <Modal title="＋ Add Assay" locations={locations} onSave={handleAdd} onClose={() => setShowAdd(false)} />}
-      {editing && <Modal title="Edit Assay" initial={editing} locations={locations} onSave={handleEdit} onClose={() => setEditing(null)} />}
+      {showAdd && <Modal title="＋ Add Assay" locations={locations} departments={departments} onSave={handleAdd} onClose={() => setShowAdd(false)} />}
+      {editing && <Modal title="Edit Assay" initial={editing} locations={locations} departments={departments} onSave={handleEdit} onClose={() => setEditing(null)} />}
     </div>
   );
 }

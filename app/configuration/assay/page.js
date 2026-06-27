@@ -4,9 +4,10 @@ import { locationWhere } from '@/lib/location';
 import AssayConfigClient from './AssayConfigClient';
 
 export default async function AssayConfigPage() {
-  const [locations, where] = await Promise.all([
+  const [locations, where, departments] = await Promise.all([
     prisma.location.findMany({ orderBy: { name: 'asc' } }),
     locationWhere(),
+    prisma.departmentConfig.findMany({ where: { active: true }, orderBy: { name: 'asc' } }),
   ]);
 
   const assays = await prisma.assayConfig.findMany({
@@ -19,6 +20,7 @@ export default async function AssayConfigPage() {
     <AssayConfigClient
       initialAssays={assays}
       locations={locations}
+      departments={departments}
     />
   );
 }

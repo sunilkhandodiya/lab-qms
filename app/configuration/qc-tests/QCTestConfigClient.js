@@ -56,8 +56,8 @@ function TestModal({ title, initial, master, onSave, onClose }) {
   const init = initial ? {
     testCode: initial.testCode || '', testName: initial.testName || '', method: initial.method || '',
     unit: initial.unit || '', locationId: initial.locationId || '', instrumentId: initial.instrumentId || '',
-    departmentId: initial.departmentId || '', lot1Id: initial.lot1Id || '', lot2Id: initial.lot2Id || '', lot3Id: initial.lot3Id || '',
-  } : { testCode: '', testName: '', method: '', unit: '', locationId: '', instrumentId: '', departmentId: '', lot1Id: '', lot2Id: '', lot3Id: '' };
+    departmentName: initial.department?.name || '', lot1Id: initial.lot1Id || '', lot2Id: initial.lot2Id || '', lot3Id: initial.lot3Id || '',
+  } : { testCode: '', testName: '', method: '', unit: '', locationId: '', instrumentId: '', departmentName: '', lot1Id: '', lot2Id: '', lot3Id: '' };
 
   const [form, setForm] = useState(init);
   const [saving, setSaving] = useState(false);
@@ -110,7 +110,13 @@ function TestModal({ title, initial, master, onSave, onClose }) {
           </div>
           <SimpleSelect label="Location" options={master.locations} value={form.locationId} onChange={v => set('locationId', v)} placeholder="Select location" />
           <SimpleSelect label="Instrument" options={locInstruments} value={form.instrumentId} onChange={v => set('instrumentId', v)} placeholder={!form.locationId ? 'Select location first' : 'Select instrument'} />
-          <SimpleSelect label="Department" options={master.departments} value={form.departmentId} onChange={v => set('departmentId', v)} placeholder="Select department" />
+          <div className="form-group">
+            <label className="form-label">Department</label>
+            <select className="form-select" value={form.departmentName} onChange={e => set('departmentName', e.target.value)}>
+              <option value="">Select department</option>
+              {master.departments.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
+            </select>
+          </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14 }}>
             <SimpleSelect label="Lot 1" options={locLots} value={form.lot1Id} onChange={v => set('lot1Id', v)} placeholder="Select lot" />
             <SimpleSelect label="Lot 2" options={locLots} value={form.lot2Id} onChange={v => set('lot2Id', v)} placeholder="Select lot" />

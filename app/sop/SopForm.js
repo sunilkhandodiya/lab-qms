@@ -9,7 +9,7 @@ import { useRouter } from 'next/navigation';
 
 const CATEGORIES = ['SOP', 'WORK_INSTRUCTION', 'QUALITY_MANUAL', 'FORM', 'POLICY'];
 
-export default function SopForm() {
+export default function SopForm({ departments = [] }) {
   const { data: session } = useSession();
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -91,7 +91,10 @@ export default function SopForm() {
                 </div>
                 <div className="form-group">
                   <label className="form-label">Department</label>
-                  <input className="form-input" value={form.department} onChange={e => setForm(f => ({ ...f, department: e.target.value }))} placeholder="e.g. Biochemistry" />
+                  <select className="form-select" value={form.department} onChange={e => setForm(f => ({ ...f, department: e.target.value }))}>
+                    <option value="">Select department</option>
+                    {departments.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
+                  </select>
                 </div>
                 <div className="form-group">
                   <label className="form-label">Instrument</label>

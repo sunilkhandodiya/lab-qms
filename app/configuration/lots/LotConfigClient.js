@@ -26,7 +26,7 @@ function Toggle({ checked, onChange, disabled }) {
 
 const EMPTY = { lotNo: '', name: '', expiry: '', department: '', locationId: '' };
 
-function Modal({ title, initial, locations, onSave, onClose }) {
+function Modal({ title, initial, locations, departments, onSave, onClose }) {
   const [form, setForm] = useState(initial
     ? { ...initial, expiry: initial.expiry ? format(new Date(initial.expiry), 'yyyy-MM-dd') : '' }
     : EMPTY);
@@ -67,7 +67,10 @@ function Modal({ title, initial, locations, onSave, onClose }) {
             </div>
             <div className="form-group">
               <label className="form-label">Department</label>
-              <input className="form-input" value={form.department} onChange={e => set('department', e.target.value)} placeholder="e.g. Clinical Hematology" />
+              <select className="form-select" value={form.department} onChange={e => set('department', e.target.value)}>
+                <option value="">Select department</option>
+                {departments.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
+              </select>
             </div>
           </div>
           <div className="form-group">
@@ -87,7 +90,7 @@ function Modal({ title, initial, locations, onSave, onClose }) {
   );
 }
 
-export default function LotConfigClient({ initialLots, locations }) {
+export default function LotConfigClient({ initialLots, locations, departments }) {
   const [lots, setLots] = useState(initialLots);
   const [filterLoc, setFilterLoc] = useState('');
   const [search, setSearch] = useState('');
@@ -232,8 +235,8 @@ export default function LotConfigClient({ initialLots, locations }) {
         </div>
       </div>
 
-      {showAdd && <Modal title="＋ Add Lot" locations={locations} onSave={handleAdd} onClose={() => setShowAdd(false)} />}
-      {editing && <Modal title="Edit Lot" initial={editing} locations={locations} onSave={handleEdit} onClose={() => setEditing(null)} />}
+      {showAdd && <Modal title="＋ Add Lot" locations={locations} departments={departments} onSave={handleAdd} onClose={() => setShowAdd(false)} />}
+      {editing && <Modal title="Edit Lot" initial={editing} locations={locations} departments={departments} onSave={handleEdit} onClose={() => setEditing(null)} />}
     </div>
   );
 }

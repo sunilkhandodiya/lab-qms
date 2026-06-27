@@ -19,10 +19,11 @@ const NAV = [
   {
     group: true, icon: '◈', label: 'Configuration', page: 'configuration',
     children: [
-      { href: '/configuration/instruments', label: 'Instrument' },
-      { href: '/configuration/assay',       label: 'Assay' },
-      { href: '/configuration/qc-tests',    label: 'Master QC Test' },
-      { href: '/configuration/lots',        label: 'Lot' },
+      { href: '/configuration/instruments',  label: 'Instrument' },
+      { href: '/configuration/assay',        label: 'Assay' },
+      { href: '/configuration/qc-tests',     label: 'Master QC Test' },
+      { href: '/configuration/lots',         label: 'Lot' },
+      { href: '/configuration/departments',  label: 'Department' },
     ],
   },
 ];

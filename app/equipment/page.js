@@ -32,7 +32,10 @@ function DueCell({ date, now }) {
 export default async function EquipmentPage({ searchParams }) {
   const sp = (await searchParams) || {};
   const filter = sp.filter;
-  const where = await locationWhere();
+  const [where, departments] = await Promise.all([
+    locationWhere(),
+    prisma.departmentConfig.findMany({ where: { active: true }, orderBy: { name: 'asc' } }),
+  ]);
   const now = new Date();
 
   const equipment = await prisma.equipment.findMany({
@@ -102,7 +105,7 @@ export default async function EquipmentPage({ searchParams }) {
           <div className="page-title">Equipment & Maintenance</div>
           <div className="page-subtitle">Asset register · Calibration · Preventive maintenance</div>
         </div>
-        <CanDo permission="equipment:add"><EquipmentForm /></CanDo>
+        <CanDo permission="equipment:add"><EquipmentForm departments={departments} /></CanDo>
       </div>
 
       {filterLabel && <FilterBar label={filterLabel} count={listEquipment.length} clearHref="/equipment" />}

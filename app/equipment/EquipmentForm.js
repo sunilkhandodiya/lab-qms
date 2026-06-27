@@ -23,7 +23,7 @@ const EMPTY = {
   installedAt: '',
 };
 
-export default function EquipmentForm() {
+export default function EquipmentForm({ departments = [] }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -98,7 +98,10 @@ export default function EquipmentForm() {
                   </div>
                   <div className="form-group">
                     <label className="form-label">Department</label>
-                    <input className="form-input" value={form.department} onChange={e => set('department', e.target.value)} placeholder="Biochemistry" />
+                    <select className="form-select" value={form.department} onChange={e => set('department', e.target.value)}>
+                      <option value="">Select department</option>
+                      {departments.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
+                    </select>
                   </div>
                   <div className="form-group">
                     <label className="form-label">Manufacturer</label>

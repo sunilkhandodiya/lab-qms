@@ -62,7 +62,7 @@ function CreatableSelect({ label, required, options = [], value, onChange, onCre
 
 // ── Add QC Test Modal ─────────────────────────────────────────────────────────
 function AddQCTestModal({ master, onMasterUpdate, onClose, onSaved }) {
-  const [form, setForm] = useState({ testCode: '', testName: '', method: '', unit: '', locationId: '', instrumentId: '', departmentId: '', lot1Id: '', lot2Id: '', lot3Id: '' });
+  const [form, setForm] = useState({ testCode: '', testName: '', method: '', unit: '', locationId: '', instrumentId: '', departmentName: '', lot1Id: '', lot2Id: '', lot3Id: '' });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -125,7 +125,13 @@ function AddQCTestModal({ master, onMasterUpdate, onClose, onSaved }) {
               <input className="form-input" value={form.unit} onChange={e => set('unit', e.target.value)} placeholder="e.g. 10^3/UL" />
             </div>
           </div>
-          <CreatableSelect label="Department" options={master.departments} value={form.departmentId} onChange={v => set('departmentId', v)} onCreateAndSelect={n => createMaster('department', n)} placeholder="Select department" />
+          <div>
+            <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4 }}>Department</label>
+            <select className="form-select" value={form.departmentName} onChange={e => set('departmentName', e.target.value)}>
+              <option value="">Select department</option>
+              {master.departments.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
+            </select>
+          </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
             <CreatableSelect label="Lot 1" options={locLots} value={form.lot1Id} onChange={v => set('lot1Id', v)} onCreateAndSelect={n => createMaster('lot', n, form.locationId)} disabled={!form.locationId} hint={!form.locationId ? 'Please select a location first' : ''} placeholder="Select lot" />
             <CreatableSelect label="Lot 2" options={locLots} value={form.lot2Id} onChange={v => set('lot2Id', v)} onCreateAndSelect={n => createMaster('lot', n, form.locationId)} disabled={!form.locationId} placeholder="Select lot" />
@@ -144,7 +150,7 @@ function AddQCTestModal({ master, onMasterUpdate, onClose, onSaved }) {
 // ── Add QC Profile Modal ──────────────────────────────────────────────────────
 function AddQCProfileModal({ master, onClose, onSaved }) {
   const [profileName, setProfileName] = useState('');
-  const [departmentId, setDepartmentId] = useState('');
+  const [departmentName, setDepartmentName] = useState('');
   const [locationId, setLocationId] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -155,7 +161,7 @@ function AddQCProfileModal({ master, onClose, onSaved }) {
     const res = await fetch('/api/qc-profiles', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ profileName: profileName.trim(), departmentId: departmentId || null, locationId: locationId || null }),
+      body: JSON.stringify({ profileName: profileName.trim(), departmentName: departmentName || null, locationId: locationId || null }),
     });
     if (!res.ok) { const d = await res.json(); setError(d.error || 'Failed to save.'); setSaving(false); return; }
     onSaved(await res.json());
@@ -184,12 +190,12 @@ function AddQCProfileModal({ master, onClose, onSaved }) {
           <div style={{ marginBottom: 16 }}>
             <select
               className="form-select"
-              value={departmentId}
-              onChange={e => setDepartmentId(e.target.value)}
-              style={{ fontSize: 14, padding: '14px 16px', color: departmentId ? 'var(--text-primary)' : 'var(--text-muted)' }}
+              value={departmentName}
+              onChange={e => setDepartmentName(e.target.value)}
+              style={{ fontSize: 14, padding: '14px 16px', color: departmentName ? 'var(--text-primary)' : 'var(--text-muted)' }}
             >
               <option value="">Department</option>
-              {master.departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+              {master.departments.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
             </select>
           </div>
 

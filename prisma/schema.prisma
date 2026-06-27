@@ -113,9 +113,10 @@ model Location {
   riskAssessments RiskAssessment[]
   qualityRecords  QualityRecord[]
   eqasSchemes     EQASScheme[]
-  instrumentConfigs InstrumentConfig[]
-  assayConfigs      AssayConfig[]
-  lotConfigs        LotConfig[]
+  instrumentConfigs  InstrumentConfig[]
+  assayConfigs       AssayConfig[]
+  lotConfigs         LotConfig[]
+  departmentConfigs  DepartmentConfig[]
 
   @@unique([name, stateId])
 }
@@ -799,6 +800,16 @@ model LotConfig {
   name       String
   expiry     DateTime?
   department String?
+  active     Boolean   @default(true)
+  locationId String?
+  location   Location? @relation(fields: [locationId], references: [id])
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+model DepartmentConfig {
+  id         String    @id @default(cuid())
+  name       String
   active     Boolean   @default(true)
   locationId String?
   location   Location? @relation(fields: [locationId], references: [id])

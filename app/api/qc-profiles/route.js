@@ -24,14 +24,24 @@ export async function GET(request) {
 
 export async function POST(request) {
   const body = await request.json();
-  const { profileName, departmentId, locationId } = body;
+  const { profileName, locationId } = body;
 
   if (!profileName) {
     return NextResponse.json({ error: 'Profile name is required' }, { status: 400 });
   }
 
+  let departmentId = body.departmentId || null;
+  if (!departmentId && body.departmentName) {
+    const dept = await prisma.department.upsert({
+      where: { name: body.departmentName },
+      update: {},
+      create: { name: body.departmentName },
+    });
+    departmentId = dept.id;
+  }
+
   const profile = await prisma.qCProfile.create({
-    data: { profileName, departmentId: departmentId || null, locationId: locationId || null },
+    data: { profileName, departmentId, locationId: locationId || null },
     include: { department: true, location: true },
   });
 

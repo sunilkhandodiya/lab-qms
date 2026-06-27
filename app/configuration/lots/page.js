@@ -4,9 +4,10 @@ import { locationWhere } from '@/lib/location';
 import LotConfigClient from './LotConfigClient';
 
 export default async function LotConfigPage() {
-  const [locations, where] = await Promise.all([
+  const [locations, where, departments] = await Promise.all([
     prisma.location.findMany({ orderBy: { name: 'asc' } }),
     locationWhere(),
+    prisma.departmentConfig.findMany({ where: { active: true }, orderBy: { name: 'asc' } }),
   ]);
 
   const lots = await prisma.lotConfig.findMany({
@@ -15,5 +16,5 @@ export default async function LotConfigPage() {
     orderBy: { lotNo: 'asc' },
   });
 
-  return <LotConfigClient initialLots={lots} locations={locations} />;
+  return <LotConfigClient initialLots={lots} locations={locations} departments={departments} />;
 }

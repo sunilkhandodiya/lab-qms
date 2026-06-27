@@ -14,7 +14,7 @@ export default async function QCPage() {
     }),
     Promise.all([
       prisma.location.findMany({ orderBy: { name: 'asc' } }),
-      prisma.department.findMany({ orderBy: { name: 'asc' } }),
+      prisma.departmentConfig.findMany({ where: { active: true }, orderBy: { name: 'asc' } }),
       prisma.instrument.findMany({ include: { location: true }, orderBy: { name: 'asc' } }),
       prisma.lot.findMany({ include: { location: true }, orderBy: { name: 'asc' } }),
     ]).then(([locations, departments, instruments, lots]) => ({

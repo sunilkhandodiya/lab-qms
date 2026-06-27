@@ -39,7 +39,7 @@ function LevelRow({ index, level, onChange, onRemove }) {
   );
 }
 
-function Modal({ locations, onClose }) {
+function Modal({ locations, departments, onClose }) {
   const router = useRouter();
   const [form, setForm] = useState({ name: '', unit: '', method: '', department: '', instrument: '', locationId: '', mean: '', sd: '', cv: '' });
   const [levels, setLevels] = useState([]);
@@ -111,7 +111,10 @@ function Modal({ locations, onClose }) {
             </div>
             <div>
               <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4 }}>Department</label>
-              <input className="form-input" value={form.department} onChange={e => setF('department', e.target.value)} placeholder="e.g. Haematology" />
+              <select className="form-select" value={form.department} onChange={e => setF('department', e.target.value)} style={{ color: form.department ? 'var(--text-primary)' : 'var(--text-muted)' }}>
+                <option value="">Select department</option>
+                {departments.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
+              </select>
             </div>
           </div>
 
@@ -178,14 +181,14 @@ function Modal({ locations, onClose }) {
   );
 }
 
-export default function AddAnalyteButton({ locations }) {
+export default function AddAnalyteButton({ locations, departments }) {
   const [open, setOpen] = useState(false);
   return (
     <>
       <CanDo permission="iqc:add_analyte">
         <button className="btn btn-primary" onClick={() => setOpen(true)}>＋ Add QC Test</button>
       </CanDo>
-      {open && <Modal locations={locations} onClose={() => setOpen(false)} />}
+      {open && <Modal locations={locations} departments={departments} onClose={() => setOpen(false)} />}
     </>
   );
 }
