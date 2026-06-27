@@ -25,6 +25,7 @@ const NAV = [
       { href: '/configuration/qc-tests',     label: 'Master QC Test' },
       { href: '/configuration/lots',         label: 'Lot' },
       { href: '/configuration/departments',  label: 'Department' },
+      { href: '/configuration/methods',      label: 'Method' },
     ],
   },
 ];
