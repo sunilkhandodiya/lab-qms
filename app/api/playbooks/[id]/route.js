@@ -46,6 +46,7 @@ export async function PATCH(request, { params }) {
             passMin: s.passMin != null ? parseFloat(s.passMin) : null,
             passMax: s.passMax != null ? parseFloat(s.passMax) : null,
             onFail: s.onFail?.trim() || null,
+            functionality: s.functionality?.trim() || null,
           })),
         });
       }

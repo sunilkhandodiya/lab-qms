@@ -900,6 +900,7 @@ model PlaybookStep {
   passMin       Float?
   passMax       Float?
   onFail        String?
+  functionality String?
   responses     PlaybookResponse[]
 }
 
@@ -909,6 +910,7 @@ enum StepType {
   NUMBER
   CHOICE
   TEMPERATURE
+  FORM
 }
 
 model PlaybookRun {
