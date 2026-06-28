@@ -5,7 +5,7 @@ import { CanDo } from '@/components/RoleGuard';
 
 const EMPTY = { analyte: '', department: '', method: '', unit: '', reagentSupplier: '', temperature: '', locationId: '' };
 
-function Modal({ title, initial, locations, departments, methods, onSave, onClose }) {
+function Modal({ title, initial, locations, departments, methods, units, suppliers, temperatures, onSave, onClose }) {
   const [form, setForm] = useState(initial ? { ...initial, temperature: initial.temperature ?? '' } : EMPTY);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -49,15 +49,24 @@ function Modal({ title, initial, locations, departments, methods, onSave, onClos
             </div>
             <div className="form-group">
               <label className="form-label">Unit</label>
-              <input className="form-input" value={form.unit} onChange={e => set('unit', e.target.value)} placeholder="e.g. g/dL" />
+              <select className="form-select" value={form.unit||''} onChange={e => set('unit', e.target.value)}>
+                <option value="">Select unit</option>
+                {units.map(u => <option key={u.id} value={u.symbol||u.name}>{u.name}{u.symbol?' ('+u.symbol+')':''}</option>)}
+              </select>
             </div>
             <div className="form-group">
               <label className="form-label">Reagent Supplier</label>
-              <input className="form-input" value={form.reagentSupplier} onChange={e => set('reagentSupplier', e.target.value)} placeholder="e.g. ZYBIO" />
+              <select className="form-select" value={form.reagentSupplier||''} onChange={e => set('reagentSupplier', e.target.value)}>
+                <option value="">Select supplier</option>
+                {suppliers.map(s => <option key={s.id} value={s.name}>{s.name}{s.code?' ('+s.code+')':''}</option>)}
+              </select>
             </div>
             <div className="form-group">
-              <label className="form-label">Temperature (°C)</label>
-              <input className="form-input" type="number" value={form.temperature} onChange={e => set('temperature', e.target.value)} placeholder="e.g. 37" />
+              <label className="form-label">Temperature</label>
+              <select className="form-select" value={form.temperature||''} onChange={e => set('temperature', e.target.value)}>
+                <option value="">Select temperature</option>
+                {temperatures.map(t => <option key={t.id} value={t.label+(t.value!=null?' ('+t.value+t.unit+')':'')}>{t.label}{t.value!=null?' — '+t.value+t.unit:''}</option>)}
+              </select>
             </div>
             <div className="form-group">
               <label className="form-label">Location</label>
@@ -77,7 +86,7 @@ function Modal({ title, initial, locations, departments, methods, onSave, onClos
   );
 }
 
-export default function AssayConfigClient({ initialAssays, locations, departments, methods }) {
+export default function AssayConfigClient({ initialAssays, locations, departments, methods, units, suppliers, temperatures }) {
   const [records, setRecords] = useState(initialAssays);
   const [filterLoc, setFilterLoc] = useState('');
   const [search, setSearch] = useState('');
@@ -195,8 +204,8 @@ export default function AssayConfigClient({ initialAssays, locations, department
         </div>
       </div>
 
-      {showAdd && <Modal title="＋ Add Assay" locations={locations} departments={departments} methods={methods} onSave={handleAdd} onClose={() => setShowAdd(false)} />}
-      {editing && <Modal title="Edit Assay" initial={editing} locations={locations} departments={departments} methods={methods} onSave={handleEdit} onClose={() => setEditing(null)} />}
+      {showAdd && <Modal title="＋ Add Assay" locations={locations} departments={departments} methods={methods} units={units} suppliers={suppliers} temperatures={temperatures} onSave={handleAdd} onClose={() => setShowAdd(false)} />}
+      {editing && <Modal title="Edit Assay" initial={editing} locations={locations} departments={departments} methods={methods} units={units} suppliers={suppliers} temperatures={temperatures} onSave={handleEdit} onClose={() => setEditing(null)} />}
     </div>
   );
 }

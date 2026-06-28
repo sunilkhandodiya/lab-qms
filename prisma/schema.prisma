@@ -119,8 +119,14 @@ model Location {
   departmentConfigs  DepartmentConfig[]
   machineConfigs     MachineConfig[]
   methodConfigs      MethodConfig[]
-  playbooks          Playbook[]
-  nonConformances    NonConformance[]
+  playbooks              Playbook[]
+  nonConformances        NonConformance[]
+  unitConfigs            UnitConfig[]
+  temperatureConfigs     TemperatureConfig[]
+  reagentSupplierConfigs ReagentSupplierConfig[]
+  eventTypeConfigs       EventTypeConfig[]
+  westgardConfigs        WestgardConfig[]
+  uploadedDocuments      UploadedDocument[]
 
   @@unique([name, stateId])
 }
@@ -805,7 +811,7 @@ model AssayConfig {
   method          String?
   unit            String?
   reagentSupplier String?
-  temperature     Float?
+  temperature     String?
   locationId      String?
   location        Location? @relation(fields: [locationId], references: [id])
   createdAt       DateTime  @default(now())
@@ -992,4 +998,79 @@ enum NCStatus {
   INVESTIGATION
   ACTION_TAKEN
   CLOSED
+}
+
+// ─── New Configuration Tables ─────────────────────────────────────────────────
+
+model UnitConfig {
+  id         String    @id @default(cuid())
+  name       String
+  symbol     String?
+  active     Boolean   @default(true)
+  locationId String?
+  location   Location? @relation(fields: [locationId], references: [id])
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+model TemperatureConfig {
+  id         String    @id @default(cuid())
+  label      String
+  value      Float?
+  unit       String    @default("°C")
+  active     Boolean   @default(true)
+  locationId String?
+  location   Location? @relation(fields: [locationId], references: [id])
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+model ReagentSupplierConfig {
+  id         String    @id @default(cuid())
+  name       String
+  code       String?
+  active     Boolean   @default(true)
+  locationId String?
+  location   Location? @relation(fields: [locationId], references: [id])
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+model EventTypeConfig {
+  id         String    @id @default(cuid())
+  name       String
+  category   String?
+  active     Boolean   @default(true)
+  locationId String?
+  location   Location? @relation(fields: [locationId], references: [id])
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+model WestgardConfig {
+  id         String    @id @default(cuid())
+  locationId String?
+  location   Location? @relation(fields: [locationId], references: [id])
+  rule12s    Boolean   @default(true)
+  rule13s    Boolean   @default(true)
+  rule22s    Boolean   @default(true)
+  ruleR4s    Boolean   @default(true)
+  rule41s    Boolean   @default(false)
+  rule10x    Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+model UploadedDocument {
+  id         String    @id @default(cuid())
+  name       String
+  code       String?
+  fileType   String?
+  fileSize   Int?
+  fileData   String?   @db.Text
+  locationId String?
+  location   Location? @relation(fields: [locationId], references: [id])
+  uploadedBy String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 }

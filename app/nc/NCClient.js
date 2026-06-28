@@ -142,9 +142,17 @@ function NCDetailModal({ nc, onClose, onUpdate }) {
             <textarea className="form-input" value={rootCause} onChange={e=>setRootCause(e.target.value)} rows={3} style={{ resize:'vertical' }} placeholder="Document the root cause..." />
           </div>
         </div>
-        <div className="modal-foot">
-          <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
-          <button className="btn btn-primary" onClick={handleSave} disabled={saving}>{saving?'Saving…':'Update'}</button>
+        <div className="modal-foot" style={{ justifyContent:'space-between' }}>
+          <div style={{ display:'flex',gap:8,alignItems:'center' }}>
+            {nc.capaId
+              ?<span style={{ fontSize:12,padding:'4px 10px',borderRadius:8,background:'rgba(22,163,74,0.12)',color:'#16a34a',fontWeight:600 }}>✓ CAPA Linked</span>
+              :<a href="/capa" className="btn btn-ghost" style={{ fontSize:13,textDecoration:'none' }}>→ Raise CAPA</a>
+            }
+          </div>
+          <div style={{ display:'flex',gap:8 }}>
+            <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+            <button className="btn btn-primary" onClick={handleSave} disabled={saving}>{saving?'Saving…':'Update'}</button>
+          </div>
         </div>
       </div>
     </div>
