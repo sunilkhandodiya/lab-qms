@@ -127,6 +127,7 @@ model Location {
   eventTypeConfigs       EventTypeConfig[]
   westgardConfigs        WestgardConfig[]
   uploadedDocuments      UploadedDocument[]
+  qcEntries              QCEntry[]
 
   @@unique([name, stateId])
 }
@@ -697,10 +698,12 @@ model QCTest {
   lot2         Lot?        @relation("Lot2", fields: [lot2Id], references: [id])
   lot3Id       String?
   lot3         Lot?        @relation("Lot3", fields: [lot3Id], references: [id])
-  hasResult    Boolean   @default(false)
-  active       Boolean   @default(true)
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  hasResult    Boolean        @default(false)
+  active       Boolean        @default(true)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  entries      QCEntry[]
+  targets      QCTestTarget[]
 }
 
 model QCProfile {
@@ -1073,4 +1076,53 @@ model UploadedDocument {
   uploadedBy String?
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
+}
+
+// ─── IQC Result Entry (per-date, all lots, with approval) ─────────────────────
+
+enum EntryApproval {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model QCEntry {
+  id             String        @id @default(cuid())
+  qcTestId       String
+  qcTest         QCTest        @relation(fields: [qcTestId], references: [id])
+  entryDate      DateTime      @default(now())
+  measuredBy     String        @default("")
+  lot1Value      Float?
+  lot1ZScore     Float?
+  lot1Flags      String[]
+  lot2Value      Float?
+  lot2ZScore     Float?
+  lot2Flags      String[]
+  lot3Value      Float?
+  lot3ZScore     Float?
+  lot3Flags      String[]
+  approvalStatus EntryApproval @default(PENDING)
+  approvedBy     String?
+  approvedAt     DateTime?
+  approvalNote   String?
+  locationId     String?
+  location       Location?     @relation(fields: [locationId], references: [id])
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+model QCTestTarget {
+  id            String    @id @default(cuid())
+  qcTestId      String
+  qcTest        QCTest    @relation(fields: [qcTestId], references: [id])
+  targetType    String    @default("Fixed")
+  effectiveFrom DateTime  @default(now())
+  lot1Mean      Float?
+  lot1SD        Float?
+  lot2Mean      Float?
+  lot2SD        Float?
+  lot3Mean      Float?
+  lot3SD        Float?
+  active        Boolean   @default(true)
+  createdAt     DateTime  @default(now())
 }

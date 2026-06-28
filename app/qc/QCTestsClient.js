@@ -2,6 +2,7 @@
 // app/qc/QCTestsClient.js
 import { CanDo } from '@/components/RoleGuard';
 import { useState, useMemo } from 'react';
+import Link from 'next/link';
 
 // ── Reusable creatable dropdown ───────────────────────────────────────────────
 function CreatableSelect({ label, required, options = [], value, onChange, onCreateAndSelect, disabled, placeholder, hint }) {
@@ -459,7 +460,7 @@ export default function QCTestsClient({ initialTests, initialProfiles, initialMa
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
               <thead>
                 <tr style={{ background: 'var(--bg-secondary)' }}>
-                  {['Sr. No.', '', 'Test Name', 'Department', 'Method', 'Unit', 'Instrument', 'Lot 1', 'Lot 2', 'Lot 3', 'Location', 'Has Result', 'Active'].map((h, i) => (
+                  {['Sr. No.', '', 'Test Name', 'Department', 'Method', 'Unit', 'Instrument', 'Lot 1', 'Lot 2', 'Lot 3', 'Location', 'Has Result', 'Active', ''].map((h, i) => (
                     <th key={i} style={{ padding: '10px 10px 4px', color: 'var(--text-muted)', fontWeight: 500, fontSize: 11, textAlign: 'left', borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap' }}>{h}</th>
                   ))}
                 </tr>
@@ -478,7 +479,7 @@ export default function QCTestsClient({ initialTests, initialProfiles, initialMa
               </thead>
               <tbody>
                 {filtered.length === 0 ? (
-                  <tr><td colSpan={13} style={{ padding: '32px', textAlign: 'center', color: 'var(--text-muted)' }}>No QC tests found</td></tr>
+                  <tr><td colSpan={14} style={{ padding: '32px', textAlign: 'center', color: 'var(--text-muted)' }}>No QC tests found</td></tr>
                 ) : filtered.map((t, i) => (
                   <tr key={t.id} style={{ borderBottom: '1px solid var(--border)' }}
                     onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-card-hover)'}
@@ -498,6 +499,9 @@ export default function QCTestsClient({ initialTests, initialProfiles, initialMa
                     <td style={{ padding: '9px 10px', fontSize: 12 }}>📍 {t.location?.name || '—'}</td>
                     <td style={{ padding: '9px 10px', textAlign: 'center' }}>{t.hasResult ? <span style={{ color: 'var(--accent-green)', fontSize: 16 }}>✓</span> : <span style={{ color: 'var(--accent-red)', fontSize: 14 }}>✗</span>}</td>
                     <td style={{ padding: '9px 10px', textAlign: 'center' }}><span style={{ color: 'var(--accent-blue)', opacity: t.active ? 1 : 0.3, fontSize: 16 }}>⏻</span></td>
+                    <td style={{ padding: '9px 10px' }}>
+                      <Link href={`/qc/${t.id}`} style={{ color: 'var(--accent-blue)', fontSize: 12, textDecoration: 'none', whiteSpace: 'nowrap' }}>View →</Link>
+                    </td>
                   </tr>
                 ))}
               </tbody>
