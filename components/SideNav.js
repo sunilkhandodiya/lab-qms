@@ -10,11 +10,13 @@ const NAV = [
   { section: 'Quality' },
   { href: '/general-quality',  icon: '☷', label: 'General Quality',        page: 'general_quality' },
   { href: '/sop',              icon: '▤', label: 'SOP',                    page: 'sop' },
+  { href: '/playbook',         icon: '▶', label: 'Playbook',               page: 'playbook' },
   { href: '/calibration',      icon: '◎', label: 'Control & Calibration',  page: 'calibration' },
   { section: 'Operations' },
   { href: '/equipment',        icon: '⚙', label: 'Equipment & Maint.',     page: 'equipment' },
   { href: '/risk',             icon: '⚠', label: 'Risk Assessment',        page: 'risk' },
   { href: '/training',         icon: '◷', label: 'Training',               page: 'training' },
+  { href: '/nc',               icon: '⚑', label: 'Non-Conformance',        page: 'nc' },
   { section: 'Configuration' },
   {
     group: true, icon: '◈', label: 'Configuration', page: 'configuration',

@@ -119,6 +119,8 @@ model Location {
   departmentConfigs  DepartmentConfig[]
   machineConfigs     MachineConfig[]
   methodConfigs      MethodConfig[]
+  playbooks          Playbook[]
+  nonConformances    NonConformance[]
 
   @@unique([name, stateId])
 }
@@ -841,4 +843,153 @@ model MethodConfig {
   location   Location? @relation(fields: [locationId], references: [id])
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
+}
+
+// ─── Playbook / Procedure Builder ─────────────────────────────────────────────
+
+model Playbook {
+  id          String           @id @default(cuid())
+  title       String
+  code        String?
+  category    PlaybookCategory
+  description String?          @db.Text
+  department  String?
+  locationId  String?
+  location    Location?        @relation(fields: [locationId], references: [id])
+  active      Boolean          @default(true)
+  steps       PlaybookStep[]
+  runs        PlaybookRun[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
+enum PlaybookCategory {
+  DAILY_QC
+  INSTRUMENT_STARTUP
+  INSTRUMENT_SHUTDOWN
+  CALIBRATION
+  SAMPLE_HANDLING
+  REAGENT_PREPARATION
+  EQUIPMENT_MAINTENANCE
+  SAFETY_CHECK
+  SHIFT_HANDOVER
+  INCIDENT_RESPONSE
+  CUSTOM
+}
+
+model PlaybookStep {
+  id            String     @id @default(cuid())
+  playbookId    String
+  playbook      Playbook   @relation(fields: [playbookId], references: [id], onDelete: Cascade)
+  order         Int
+  title         String
+  instruction   String     @db.Text
+  stepType      StepType   @default(CHECKBOX)
+  required      Boolean    @default(true)
+  expectedValue String?
+  unit          String?
+  passMin       Float?
+  passMax       Float?
+  onFail        String?
+  responses     PlaybookResponse[]
+}
+
+enum StepType {
+  CHECKBOX
+  TEXT
+  NUMBER
+  CHOICE
+  TEMPERATURE
+}
+
+model PlaybookRun {
+  id          String      @id @default(cuid())
+  playbookId  String
+  playbook    Playbook    @relation(fields: [playbookId], references: [id])
+  runBy       String
+  locationId  String?
+  startedAt   DateTime    @default(now())
+  completedAt DateTime?
+  status      RunStatus   @default(IN_PROGRESS)
+  notes       String?
+  responses   PlaybookResponse[]
+}
+
+enum RunStatus {
+  IN_PROGRESS
+  COMPLETED
+  ABANDONED
+  FLAGGED
+}
+
+model PlaybookResponse {
+  id         String       @id @default(cuid())
+  runId      String
+  run        PlaybookRun  @relation(fields: [runId], references: [id], onDelete: Cascade)
+  stepId     String
+  step       PlaybookStep @relation(fields: [stepId], references: [id])
+  value      String?
+  passed     Boolean?
+  skipped    Boolean      @default(false)
+  note       String?
+  recordedAt DateTime     @default(now())
+}
+
+// ─── Non-Conformance / Incident Register ─────────────────────────────────────
+
+model NonConformance {
+  id              String     @id @default(cuid())
+  ncNumber        String     @unique
+  title           String
+  type            NCType
+  source          NCSource
+  severity        NCSeverity @default(MINOR)
+  department      String?
+  description     String     @db.Text
+  detectedBy      String
+  detectedAt      DateTime   @default(now())
+  locationId      String?
+  location        Location?  @relation(fields: [locationId], references: [id])
+  status          NCStatus   @default(OPEN)
+  immediateAction String?    @db.Text
+  rootCause       String?    @db.Text
+  capaId          String?
+  closedAt        DateTime?
+  closedBy        String?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+}
+
+enum NCType {
+  EQUIPMENT_FAILURE
+  REAGENT_ISSUE
+  SAMPLE_REJECTION
+  QC_FAILURE
+  PROCESS_DEVIATION
+  DOCUMENTATION
+  STAFF_COMPETENCY
+  OTHER
+}
+
+enum NCSource {
+  INTERNAL_AUDIT
+  EXTERNAL_AUDIT
+  DAILY_QC
+  PATIENT_COMPLAINT
+  STAFF_OBSERVATION
+  EQAS
+  OTHER
+}
+
+enum NCSeverity {
+  MINOR
+  MAJOR
+  CRITICAL
+}
+
+enum NCStatus {
+  OPEN
+  INVESTIGATION
+  ACTION_TAKEN
+  CLOSED
 }
